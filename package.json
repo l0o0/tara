@@ -1,0 +1,39 @@
+{
+  "name": "tara",
+  "addonName": "Tara",
+  "addonID": "tara@linxzh.com",
+  "addonRef": "tara",
+  "version": "0.0.0",
+  "description": "Zotero Addon Tara",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "node build.js",
+    "start": "node start.js",
+    "stop": "node stop.js",
+    "prerestart": "npm run build",
+    "restart": "node restart.js",
+    "release": "release-it",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/windingwind/tara.git"
+  },
+  "author": "l0o0",
+  "license": "AGPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/windingwind/tara/issues"
+  },
+  "homepage": "https://github.com/windingwind/tara#readme",
+  "releasepage": "https://github.com/windingwind/tara/releases/latest/download/tara.xpi",
+  "updaterdf": "https://raw.githubusercontent.com/windingwind/tara/master/update.rdf",
+  "dependencies": {
+    "compressing": "^1.5.1",
+    "esbuild": "^0.14.34",
+    "replace-in-file": "^6.3.2"
+  },
+  "devDependencies": {
+    "release-it": "^14.14.0",
+    "zotero-types": "^0.0.4"
+  }
+}
