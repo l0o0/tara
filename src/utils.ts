@@ -52,33 +52,35 @@ class Utils extends AddonModule {
     public async getAddonInfos() {
         let keepKeys: Array<string> = [
             'id',
-            "name",
-            "description",
-            "isActive",
             "userDisabled",
-            "spec"
+            "path"
         ];
         let wordPlugins: Array<string> = [
             'zoteroOpenOfficeIntegration@zotero.org',
             'zoteroWinWordIntegration@zotero.org'
         ];
 
-        let windows = Services.wm.getEnumerator('navigator:browser');
-        var addonManager: any;
-        while (windows.hasMoreElements()) {
-            let tmpWin = windows.getNext();
-            addonManager = tmpWin.AddonManager;
-        }
-        let infos: Array<any> = await addonManager.getAllAddons();
+        // Sometimes will throw Error: [JavaScript Error: "addon.getResourceURI is not a function"
+        // {file: "chrome://zotero/content/xpcom/prefs.js" line: 439}]
+        // let windows = Services.wm.getEnumerator('navigator:browser');
+        // var addonManager: any;
+        // while (windows.hasMoreElements()) {
+        //     let tmpWin = windows.getNext();
+        //     addonManager = tmpWin.AddonManager;
+        // }
+        // let infos: Array<any> = await addonManager.getAllAddons();
+        let extensions = OS.Path.join(this._Addon._Zotero.Profile.dir, "extensions.json");
+        let extensionsContents = this._Addon._Zotero.File.getContents(this._Addon._Zotero.File.pathToFile(extensions));
+        let extensionsInfo = JSON.parse(extensionsContents);
+        
+        let infos = extensionsInfo['addons'];
 
         infos = infos.filter(e => e.type == 'extension' &&
             !(wordPlugins.includes(e.id))
         );
 
-        let filteredInfos: Array<any> = infos.map(function (e) {
-            var out = { 'filePath': e.sourceURI.spec };
-            let tmp = out.filePath.split(/[\/\\]/)
-            out['fileName'] = tmp[tmp.length - 1];
+        let filteredInfos = infos.map(function (e) {
+            var out = {"name": e.defaultLocale.name};
             out = keepKeys.reduce(
                 (p, c) => { p[c] = e[c]; return p },
                 out);
@@ -87,12 +89,42 @@ class Utils extends AddonModule {
         return filteredInfos;
     }
 
+    public getStyleInfos(): Map<string, any> {
+        return this._Addon._Zotero.Styles.getAll();
+    }
+
+    /**
+     * Get translator basic info for backup.
+     * @returns Array of translator info map.
+     */
+    public async getTranslatorInfos() {
+        var infos =  await this._Addon._Zotero.Translators.getAll();
+        let keepKeys = ["translatorID", "path", "fileName"];
+        let filteredInfos = infos.map(function (e) {
+            return keepKeys.reduce(
+                (p, c) => {p[c] = e[c]; return p},
+                {}
+            )
+        });
+        return filteredInfos;
+    }
+
     public async getBackupInfos() {
         let addonInfos = await this.getAddonInfos();
         let prefsInfos = await this.getFilteredPrefs();
+        let cslInfos = this.getStyleInfos();
+        let tInfos = await this.getTranslatorInfos();
         return {
+            "createTime": (new Date()).toISOString(),
+            "meta": {
+                "prefNum": Object.keys(prefsInfos).length, 
+                "addonNum": addonInfos.length, 
+                "cslNum": Object.keys(cslInfos).length, 
+                "tNum": tInfos.length},
             "preferences": prefsInfos,
-            "addons" : addonInfos
+            "addons" : addonInfos,
+            "styles": cslInfos,
+            "translators": tInfos
         }
     }
 
