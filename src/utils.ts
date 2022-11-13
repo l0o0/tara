@@ -14,10 +14,6 @@ class Utils extends AddonModule {
         return OS.Path.join(profileDir, "prefs.js");
     }
 
-    public getExtensionsPath() {
-        let profileDir: string = this._Addon._Zotero.Profile.dir;
-        return OS.Path.join(profileDir, "extensions");
-    }
 
     public async readPrefsFromFile() {
         let prefsFile: string = this.getPrefsPath();
@@ -126,6 +122,47 @@ class Utils extends AddonModule {
             "styles": cslInfos,
             "translators": tInfos
         }
+    }
+
+    public async createBackupZIP(keepTara: boolean = false) {
+        // Create a temporary folder.
+        let cacheFile = this._Addon._Zotero.getTempDirectory();
+        let backupInfos = await this.getBackupInfos();
+        let backupInfosText = JSON.stringify(backupInfos);
+        let pf = OS.Path.join(cacheFile.path, "backup.json");
+        this._Addon._Zotero.File.putContents(this._Addon._Zotero.File.pathToFile(pf), backupInfosText);
+        // Copy folders.
+        let s: string, t: string;
+        let profileDir: string = this._Addon._Zotero.Profile.dir;
+        let dataDir: string = this._Addon._Zotero.Prefs.get("dataDir");
+        if (backupInfos.meta.addonNum > 0) {
+            s = OS.Path.join(profileDir, 'extensions');
+            t = OS.Path.join(cacheFile.path, 'extensions');
+            await Zotero.File.copyDirectory(s, t);
+        }
+        if (backupInfos.meta.cslNum > 0) {
+            s = OS.Path.join(dataDir, 'styles');
+            t = OS.Path.join(cacheFile.path, 'styles');
+            await Zotero.File.copyDirectory(s, t);
+        }
+        if (backupInfos.meta.tNum > 0) {
+            s = OS.Path.join(dataDir, 'translators');
+            t = OS.Path.join(cacheFile.path, 'translators');
+            await Zotero.File.copyDirectory(s, t);
+        }
+
+        
+        await this._Addon._Zotero.createDirectoryIfMissingAsync(OS.Path.join(dataDir, "backup"));
+        if (keepTara) {
+            await this._Addon._Zotero.File.copyToUnique(
+                OS.Path.join(profileDir, "extensions", "tara.xpi"), 
+                OS.Path.join(dataDir, "backup", "tara.xpi"));
+        }
+        await this._Addon._Zotero.zipDirectory(
+            cacheFile.path,
+            OS.Path.join(dataDir, "backup", "backup.zip")
+        );
+
     }
 
 
