@@ -21,21 +21,20 @@ class AddonViews extends AddonModule {
     // cannot be initialized with overlay.xul
     console.log("Initializing UI");
     const _window: Window = _Zotero.getMainWindow();
-    const menuitem = _window.document.createElement("menuitem");
-    menuitem.id = "zotero-itemmenu-addontemplate-test";
-    menuitem.setAttribute("label", "Addon Template");
-    menuitem.setAttribute("oncommand", "alert('Hello World!')");
-    menuitem.className = "menuitem-iconic";
-    menuitem.style["list-style-image"] =
-      "url('chrome://addontemplate/skin/favicon@0.5x.png')";
-    _window.document.querySelector("#zotero-itemmenu").appendChild(menuitem);
+    const button = _window.document.createElement("toolbarbutton");
+    button.id = "zotero-tb-tara";
+    button.setAttribute("type", "menu");
+    button.className = "zotero-tb-button";
+    button.style["list-style-image"] = 
+      "url('chrome://tara/skin/tara_icon.png')";
+    _window.document.querySelector("#zotero-collections-toolbar").appendChild(button);
   }
 
   public unInitViews(_Zotero) {
     console.log("Uninitializing UI");
     const _window: Window = _Zotero.getMainWindow();
     _window.document
-      .querySelector("#zotero-itemmenu-addontemplate-test")
+      .querySelector("#zotero-tb-tara")
       ?.remove();
   }
 
