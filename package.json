@@ -17,16 +17,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/windingwind/tara.git"
+    "url": "git+https://github.com/l0o0/tara.git"
   },
   "author": "l0o0",
   "license": "AGPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/windingwind/tara/issues"
+    "url": "https://github.com/l0o0/tara/issues"
   },
-  "homepage": "https://github.com/windingwind/tara#readme",
-  "releasepage": "https://github.com/windingwind/tara/releases/latest/download/tara.xpi",
-  "updaterdf": "https://raw.githubusercontent.com/windingwind/tara/master/update.rdf",
+  "homepage": "https://github.com/l0o0/tara#readme",
+  "releasepage": "https://github.com/l0o0/tara/releases/latest/download/tara.xpi",
+  "updaterdf": "https://raw.githubusercontent.com/l0o0/tara/master/update.rdf",
   "dependencies": {
     "compressing": "^1.5.1",
     "esbuild": "^0.14.34",
