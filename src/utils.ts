@@ -138,27 +138,31 @@ class Utils extends AddonModule {
         if (backupInfos.meta.addonNum > 0) {
             s = OS.Path.join(profileDir, 'extensions');
             t = OS.Path.join(cacheFile.path, 'extensions');
-            await Zotero.File.copyDirectory(s, t);
+            await this._Addon._Zotero.File.copyDirectory(s, t);
         }
         if (backupInfos.meta.cslNum > 0) {
             s = OS.Path.join(dataDir, 'styles');
             t = OS.Path.join(cacheFile.path, 'styles');
-            await Zotero.File.copyDirectory(s, t);
+            await this._Addon._Zotero.File.copyDirectory(s, t);
         }
         if (backupInfos.meta.tNum > 0) {
             s = OS.Path.join(dataDir, 'translators');
             t = OS.Path.join(cacheFile.path, 'translators');
-            await Zotero.File.copyDirectory(s, t);
+            await this._Addon._Zotero.File.copyDirectory(s, t);
         }
+        // Locate engine.json file
+        s = OS.Path.join(dataDir, 'locate');
+        t = OS.Path.join(cacheFile.path, 'locate');
+        await this._Addon._Zotero.File.copyDirectory(s, t);
 
         
-        await this._Addon._Zotero.createDirectoryIfMissingAsync(OS.Path.join(dataDir, "backup"));
+        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(OS.Path.join(dataDir, "backup"));
         if (keepTara) {
             await this._Addon._Zotero.File.copyToUnique(
-                OS.Path.join(profileDir, "extensions", "tara.xpi"), 
+                OS.Path.join(profileDir, "extensions", "tara.xpi"),
                 OS.Path.join(dataDir, "backup", "tara.xpi"));
         }
-        await this._Addon._Zotero.zipDirectory(
+        await this._Addon._Zotero.File.zipDirectory(
             cacheFile.path,
             OS.Path.join(dataDir, "backup", "backup.zip")
         );
