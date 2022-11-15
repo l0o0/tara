@@ -124,12 +124,18 @@ class Utils extends AddonModule {
         }
     }
 
-    public async createBackupZIP(keepTara: boolean = false) {
-        // Create a temporary folder.
+    public async createBackupZIP(isExport=false) {
+        // Create a temporary folder. Data in backup folder
         let cacheFile = this._Addon._Zotero.getTempDirectory();
+        const outDir = OS.Path.join(cacheFile.path, "Backup");
+        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(
+            outDir
+        );
+
         let backupInfos = await this.getBackupInfos();
         let backupInfosText = JSON.stringify(backupInfos);
-        let pf = OS.Path.join(cacheFile.path, "backup.json");
+        // Save preference
+        let pf = OS.Path.join(outDir, "backup.json");
         this._Addon._Zotero.File.putContents(this._Addon._Zotero.File.pathToFile(pf), backupInfosText);
         // Copy folders.
         let s: string, t: string;
@@ -137,35 +143,51 @@ class Utils extends AddonModule {
         let dataDir: string = this._Addon._Zotero.Prefs.get("dataDir");
         if (backupInfos.meta.addonNum > 0) {
             s = OS.Path.join(profileDir, 'extensions');
-            t = OS.Path.join(cacheFile.path, 'extensions');
+            t = OS.Path.join(outDir, 'extensions');
             await this._Addon._Zotero.File.copyDirectory(s, t);
         }
         if (backupInfos.meta.cslNum > 0) {
             s = OS.Path.join(dataDir, 'styles');
-            t = OS.Path.join(cacheFile.path, 'styles');
+            t = OS.Path.join(outDir, 'styles');
             await this._Addon._Zotero.File.copyDirectory(s, t);
         }
         if (backupInfos.meta.tNum > 0) {
             s = OS.Path.join(dataDir, 'translators');
-            t = OS.Path.join(cacheFile.path, 'translators');
+            t = OS.Path.join(outDir, 'translators');
             await this._Addon._Zotero.File.copyDirectory(s, t);
         }
         // Locate engine.json file
         s = OS.Path.join(dataDir, 'locate');
-        t = OS.Path.join(cacheFile.path, 'locate');
+        t = OS.Path.join(outDir, 'locate');
         await this._Addon._Zotero.File.copyDirectory(s, t);
 
-        
-        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(OS.Path.join(dataDir, "backup"));
-        if (keepTara) {
+        if (isExport) {
             await this._Addon._Zotero.File.copyToUnique(
                 OS.Path.join(profileDir, "extensions", "tara.xpi"),
-                OS.Path.join(dataDir, "backup", "tara.xpi"));
+                OS.Path.join(outDir, "tara.xpi"));
         }
+        let saveDir = isExport ? OS.Path.join(dataDir, "Backup") : cacheFile.path;
         await this._Addon._Zotero.File.zipDirectory(
-            cacheFile.path,
-            OS.Path.join(dataDir, "backup", "backup.zip")
+            outDir,
+            OS.Path.join(saveDir, "backup.zip")
         );
+        this._Addon._Zotero.debug("Backup complete");
+    }
+
+    public async createBackupAsAttachment() {
+        await this.createBackupZIP();
+        if (this._Addon._Zotero.Prefs.get("tara.itemid") == undefined) {
+            let item = new this._Addon._Zotero.Item("document");
+            item.setField("title", "Tara_Backup");
+            let itemID = await item.saveTx();
+            this._Addon._Zotero.Prefs.set("tara.itemid", itemID);
+        }
+        var item = this._Addon._Zotero.Item.get(this._Addon._Zotero.Prefs.get("tara.itemid"));
+        const importOptions = {
+            file : "filePath",
+            parentItemID : item.id,
+        };
+        await this._Addon._Zotero.Attachments.importFromFile(importOptions);
 
     }
 
