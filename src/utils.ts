@@ -126,8 +126,19 @@ class Utils extends AddonModule {
 
     public async createBackupZIP(isExport=false) {
         // Create a temporary folder. Data in backup folder
-        let cacheFile = this._Addon._Zotero.getTempDirectory();
-        const outDir = OS.Path.join(cacheFile.path, "Backup");
+        let cacheTmp = this._Addon._Zotero.getTempDirectory();
+        const tmpDir = cacheTmp.path;
+        // Remove existing backup data.
+        cacheTmp.append("Backup");
+        if (cacheTmp.exists()) {
+            cacheTmp.remove(false);
+        }
+        cacheTmp.append("backup.zip");
+        if (cacheTmp.exists()) {
+            cacheTmp.remove(false);
+        }
+
+        const outDir = OS.Path.join(tmpDir, "Backup");
         await this._Addon._Zotero.File.createDirectoryIfMissingAsync(
             outDir
         );
@@ -166,7 +177,7 @@ class Utils extends AddonModule {
                 OS.Path.join(profileDir, "extensions", "tara.xpi"),
                 OS.Path.join(outDir, "tara.xpi"));
         }
-        let saveDir = isExport ? OS.Path.join(dataDir, "Backup") : cacheFile.path;
+        let saveDir = isExport ? OS.Path.join(dataDir, "Backup") : tmpDir;
         await this._Addon._Zotero.File.zipDirectory(
             outDir,
             OS.Path.join(saveDir, "backup.zip")
@@ -175,6 +186,7 @@ class Utils extends AddonModule {
     }
 
     public async createBackupAsAttachment() {
+        this._Addon._Zotero.debug("** Tara start create Backup As Attachment");
         await this.createBackupZIP();
         if (this._Addon._Zotero.Prefs.get("tara.itemid") == undefined) {
             let item = new this._Addon._Zotero.Item("document");
@@ -182,13 +194,15 @@ class Utils extends AddonModule {
             let itemID = await item.saveTx();
             this._Addon._Zotero.Prefs.set("tara.itemid", itemID);
         }
-        var item = this._Addon._Zotero.Item.get(this._Addon._Zotero.Prefs.get("tara.itemid"));
+        const zipfile: string = OS.Path.join(this._Addon._Zotero.Prefs.get("dataDir"),
+            "tmp", "backup.zip");
+        var item = this._Addon._Zotero.Items.get(this._Addon._Zotero.Prefs.get("tara.itemid"));
         const importOptions = {
-            file : "filePath",
+            file : zipfile,
             parentItemID : item.id,
         };
         await this._Addon._Zotero.Attachments.importFromFile(importOptions);
-
+        this._Addon._Zotero.debug("** Tara finish create Backup As Attachment");
     }
 
 

@@ -31,7 +31,7 @@ class AddonViews extends AddonModule {
     create_menu.setAttribute("label", "Create");
     create_menu.setAttribute("class", "menuitem-iconic");
     create_menu.setAttribute("style", "list-style-image: url('chrome://tara/skin/create_icon.png');");
-    create_menu.setAttribute("oncommand", "alert('create');");
+    create_menu.setAttribute("oncommand", "Zotero.Tara.utils.createBackupAsAttachment();");
 
     export_menu.setAttribute("id", "zotero-tb-tara-export-backup");
     export_menu.setAttribute("label", "Export");
