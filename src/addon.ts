@@ -2,6 +2,7 @@ import AddonEvents from "./events";
 import AddonPrefs from "./prefs";
 import AddonViews from "./views";
 import Utils from "./utils";
+import Locale from "./locale";
 
 const { addonName } = require("../package.json");
 
@@ -13,6 +14,7 @@ class Addon {
   public views: AddonViews;
   public prefs: AddonPrefs;
   public utils: Utils;
+  public locale: Locale
 
   constructor(Zotero) {
     this._Zotero = Zotero;
@@ -20,6 +22,7 @@ class Addon {
     this.views = new AddonViews(this);
     this.prefs = new AddonPrefs(this);
     this.utils = new Utils(this);
+    this.locale = new Locale(this);
   }
 }
 

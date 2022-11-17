@@ -4,7 +4,6 @@ const { addonRef } = require("../package.json");
 
 class AddonViews extends AddonModule {
   // You can store some element in the object attributes
-  private testButton: XUL.Button;
   private progressWindowIcon: object;
 
   constructor(parent: Addon) {
@@ -27,20 +26,24 @@ class AddonViews extends AddonModule {
     var export_menu = _window.document.createElement("menuitem");
     var restore_menu = _window.document.createElement("menuitem");
 
+    const createLabel = this._Addon.locale.getString("toolbar.create");
+    const exportLabel = this._Addon.locale.getString("toolbar.export");
+    const restoreLabel = this._Addon.locale.getString("toolbar.restore");
+
     create_menu.setAttribute("id", "zotero-tb-tara-create-backup");
-    create_menu.setAttribute("label", "Create");
+    create_menu.setAttribute("label", createLabel);
     create_menu.setAttribute("class", "menuitem-iconic");
     create_menu.setAttribute("style", "list-style-image: url('chrome://tara/skin/create_icon.png');");
     create_menu.setAttribute("oncommand", "Zotero.Tara.utils.createBackupAsAttachment();");
 
     export_menu.setAttribute("id", "zotero-tb-tara-export-backup");
-    export_menu.setAttribute("label", "Export");
+    export_menu.setAttribute("label", exportLabel);
     export_menu.setAttribute("class", "menuitem-iconic");
     export_menu.setAttribute("style", "list-style-image: url('chrome://tara/skin/export_icon.png');");
     export_menu.setAttribute("oncommand", "Zotero.Tara.utils.createBackupZIP();");
 
     restore_menu.setAttribute("id", "zotero-tb-tara-restore-backup");
-    restore_menu.setAttribute("label", "Restore");
+    restore_menu.setAttribute("label", restoreLabel);
     restore_menu.setAttribute("class", "menuitem-iconic");
     restore_menu.setAttribute("style", "list-style-image: url('chrome://tara/skin/restore_icon.png');");
     restore_menu.setAttribute("oncommand", "alert('Restore');");
@@ -58,6 +61,7 @@ class AddonViews extends AddonModule {
     _window.document.querySelector("#zotero-collections-toolbar").appendChild(tool_button);
   }
 
+  // Remove UI element when remove addon
   public unInitViews(_Zotero) {
     console.log("Uninitializing UI");
     const _window: Window = _Zotero.getMainWindow();
