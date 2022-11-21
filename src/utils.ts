@@ -196,9 +196,11 @@ class Utils extends AddonModule {
         }
         const zipfile: string = OS.Path.join(this._Addon._Zotero.Prefs.get("dataDir"),
             "tmp", "backup.zip");
-        var item = this._Addon._Zotero.Items.get(this._Addon._Zotero.Prefs.get("tara.itemid"));
+        const item = this._Addon._Zotero.Items.get(this._Addon._Zotero.Prefs.get("tara.itemid"));
+        const timeString = new Date().toISOString();
         const importOptions = {
             file : zipfile,
+            title: timeString + "_backup.zip",
             parentItemID : item.id,
         };
         await this._Addon._Zotero.Attachments.importFromFile(importOptions);
