@@ -10,7 +10,6 @@
         em:version="__buildVersion__"
         em:type="2"
         em:creator="__author__"
-        em:description="__description__"
         em:homepageURL="__homepage__"
         em:iconURL="chrome://__addonRef__/skin/tara.png"
         em:optionsURL="chrome://__addonRef__/content/preferences.xul"
@@ -33,5 +32,19 @@
                 <em:maxVersion>*</em:maxVersion>
             </Description>
         </em:targetApplication>
+        <em:localized>
+            <Description>
+                <em:locale>en-US</em:locale>
+                <em:name>Tara</em:name>
+                <em:description>__descriptionenUS__</em:description>
+            </Description>
+        </em:localized>
+        <em:localized>
+            <Description>
+                <em:locale>zh-CN</em:locale>
+                <em:name>Tara</em:name>
+                <em:description>__descriptionzhCN__</em:description>
+            </Description>
+        </em:localized>
   </RDF:Description>
 </RDF:RDF>
