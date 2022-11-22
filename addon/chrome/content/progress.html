@@ -12,13 +12,14 @@
             width: 300px;
             height: 185px;
         }
+
         #progress {
             width: 220px;
         }
+
         #status {
             height: 20px;
         }
-
     </style>
 </head>
 
@@ -27,33 +28,12 @@
         <div id="status"></div>
         <progress id="progress" max="100"> </progress>
         <button>Cancle</button>
-        <table >
-            <tr>
-                <td><img src="chrome://zotero/skin/cross.png"></td>
-                <td>Zotero 配置备份完成</td>
-            </tr>
-            <tr>
-                <td><img src="chrome://zotero/skin/tick.png"></td>
-                <td>Zotero 插件备份完成</td>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>Zotero 配置备份完成</td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td>Zotero 插件备份完成</td>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>Zotero 配置备份完成</td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td>Zotero 插件备份完成</td>
-            </tr>
-        </table>
+        <ul id="listbox">
+            <li><img src="chrome://zotero/skin/cross.png">Zotero 配置备份完成</li>
+            <li><img src="chrome://zotero/skin/cross.png">Zotero 配置备份完成</li>
+        </ul>
     </div>
+
 </body>
 
 </html>

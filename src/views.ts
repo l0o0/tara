@@ -4,15 +4,14 @@ const { addonRef } = require("../package.json");
 
 class AddonViews extends AddonModule {
   // You can store some element in the object attributes
-  private progressWindowIcon: object;
+  private tickIcon: string;
+  private crossIcon: string;
+  private processWindow: any;
 
   constructor(parent: Addon) {
     super(parent);
-    this.progressWindowIcon = {
-      success: "chrome://zotero/skin/tick.png",
-      fail: "chrome://zotero/skin/cross.png",
-      default: `chrome://${addonRef}/skin/favicon.png`,
-    };
+      this.tickIcon = "chrome://zotero/skin/tick.png";
+      this.crossIcon =  "chrome://zotero/skin/cross.png";
   }
 
   public initViews(_Zotero) {
@@ -70,24 +69,28 @@ class AddonViews extends AddonModule {
       ?.remove();
   }
 
-  public showProgressWindow(
-    header: string,
-    context: string,
-    type: string = "default",
-    t: number = 5000
-  ) {
-    // A simple wrapper of the Zotero ProgressWindow
-    let progressWindow = new Zotero.ProgressWindow({ closeOnClick: true });
-    progressWindow.changeHeadline(header);
-    progressWindow.progress = new progressWindow.ItemProgress(
-      this.progressWindowIcon[type],
-      context
-    );
-    progressWindow.show();
-    if (t > 0) {
-      progressWindow.startCloseTimer(t);
+
+  public openProgressWindow(): void {
+    let win = Services.wm.getMostRecentWindow("navigator:browser");
+    if (win) {
+        this.processWindow = win.openDialog(
+            "chrome://tara/content/progress.html",
+            "",
+            "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen");
+    }
+    else {
+        this.processWindow = Services.ww.openWindow(null, 
+            "chrome://tara/content/progress.html",
+            "", 
+            "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen");
     }
   }
+
+  public updateProgressWindow(row: string, status: string): void {
+    let doc = this.processWindow.document;
+    
+  }
+
 }
 
 export default AddonViews;
