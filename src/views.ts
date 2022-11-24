@@ -101,6 +101,15 @@ class AddonViews extends AddonModule {
                 "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen"
             );
         }
+        // Reset progressWindow when progres window is closed.
+        this.progressWindow.addEventListener("onbeforeunload", (e) => {
+            this.progressWindow = undefined;
+            this._Addon._Zotero.debug("** Tara window closed");
+        });
+        // this.progressWindow.onbeforeunload  = (e) => {
+        //     this.progressWindow = undefined;
+        //     this._Addon._Zotero.debug("** Tara window closed");
+        // }
         let t = 0;
         // Wait for window
         while (
@@ -128,18 +137,25 @@ class AddonViews extends AddonModule {
         if (status) {
             innerHTML = `<img src="${
                 this.tickIcon
-            }"> Zotero ${this._Addon.locale.getString(
+            }"> ${this._Addon.locale.getString(
                 row
             )} ${this._Addon.locale.getString("progress.backupsuccess")}`;
         } else {
             innerHTML = `<img src="${
                 this.crossIcon
-            }"> Zotero ${this._Addon.locale.getString(
+            }"> ${this._Addon.locale.getString(
                 row
             )} ${this._Addon.locale.getString("progress.backupfail")}`;
         }
         ele.innerHTML = innerHTML;
         doc.querySelector("#listbox").appendChild(ele);
+    }
+
+    public completeProgressWindow() {
+        let doc = this.progressWindow.document;
+        doc.querySelector("#progress").setAttribute("value", '100');
+        doc.querySelector("#button1").textContent = 'OK';
+        doc.querySelector("#button1").setAttribute("onclick", "window.close();");
     }
 }
 

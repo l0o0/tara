@@ -208,6 +208,7 @@ class Utils extends AddonModule {
             outDir,
             OS.Path.join(saveDir, "backup.zip")
         );
+        this._Addon.views.completeProgressWindow();
         this._Addon._Zotero.debug("Backup complete");
     }
 
