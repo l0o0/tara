@@ -7,11 +7,13 @@ class AddonViews extends AddonModule {
     private tickIcon: string;
     private crossIcon: string;
     private progressWindow: any;
+    private queue: Array<string>;
 
     constructor(parent: Addon) {
         super(parent);
         this.tickIcon = "chrome://zotero/skin/tick.png";
         this.crossIcon = "chrome://zotero/skin/cross.png";
+        this.queue = [];
     }
 
     public initViews(_Zotero) {
@@ -102,14 +104,16 @@ class AddonViews extends AddonModule {
             );
         }
         // Reset progressWindow when progres window is closed.
-        this.progressWindow.addEventListener("onbeforeunload", (e) => {
+        // For window click close in an element
+        this.progressWindow.onbeforeunload  = (e) => {
             this.progressWindow = undefined;
-            this._Addon._Zotero.debug("** Tara window closed");
-        });
-        // this.progressWindow.onbeforeunload  = (e) => {
-        //     this.progressWindow = undefined;
-        //     this._Addon._Zotero.debug("** Tara window closed");
-        // }
+            this.queue = [];
+        }
+        // For close button in header bar
+        this.progressWindow.onclose  = (e) => {
+            this.progressWindow = undefined;
+            this.queue = [];
+        }
         let t = 0;
         // Wait for window
         while (
@@ -129,7 +133,7 @@ class AddonViews extends AddonModule {
         this.progressWindow.close();
     }
 
-    public updateProgressWindow(row: string, status: boolean): void {
+    public updateProgressWindow(row: string, status: boolean, value: string=''): void {
         let doc = this.progressWindow.document;
         var ele = doc.createElement("li");
         ele.setAttribute("id", row);
@@ -149,13 +153,15 @@ class AddonViews extends AddonModule {
         }
         ele.innerHTML = innerHTML;
         doc.querySelector("#listbox").appendChild(ele);
+        if (value != '') {
+            doc.querySelector("#progress").setAttribute("value", value);
+        }
     }
 
     public completeProgressWindow() {
         let doc = this.progressWindow.document;
         doc.querySelector("#progress").setAttribute("value", '100');
         doc.querySelector("#button1").textContent = 'OK';
-        doc.querySelector("#button1").setAttribute("onclick", "window.close();");
     }
 }
 
