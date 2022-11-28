@@ -229,7 +229,9 @@ class Utils extends AddonModule {
     public async createBackupAsAttachment() {
         this._Addon._Zotero.debug("** Tara start create Backup As Attachment");
         // Create Docuement Item for store backup zip file.
-        if (this._Addon._Zotero.Prefs.get("tara.itemid") == undefined) {
+        if (this._Addon._Zotero.Prefs.get("tara.itemid") == undefined 
+            || !this._Addon._Zotero.Items.get(this._Addon._Zotero.Prefs.get("tara.itemid"))
+        ) {
             let item = new this._Addon._Zotero.Item("document");
             item.setField("title", "Tara_Backup");
             let itemID = await item.saveTx();
