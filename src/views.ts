@@ -52,7 +52,7 @@ class AddonViews extends AddonModule {
         );
         export_menu.setAttribute(
             "oncommand",
-            "Zotero.Tara.utils.createBackupZIP();"
+            "Zotero.Tara.utils.exportBackup();"
         );
 
         restore_menu.setAttribute("id", "zotero-tb-tara-restore-backup");
@@ -93,14 +93,14 @@ class AddonViews extends AddonModule {
             this.progressWindow = win.openDialog(
                 "chrome://tara/content/progress.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen"
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=380"
             );
         } else {
             this.progressWindow = Services.ww.openWindow(
                 null,
                 "chrome://tara/content/progress.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen"
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=380"
             );
         }
         // Reset progressWindow when progres window is closed.
@@ -134,6 +134,7 @@ class AddonViews extends AddonModule {
     }
 
     public updateProgressWindow(row: string, status: boolean, value: string=''): void {
+        if (!this.progressWindow) return;
         let doc = this.progressWindow.document;
         var ele = doc.createElement("li");
         ele.setAttribute("id", row);
@@ -143,13 +144,13 @@ class AddonViews extends AddonModule {
                 this.tickIcon
             }"> ${this._Addon.locale.getString(
                 row
-            )} ${this._Addon.locale.getString("progress.backupsuccess")}`;
+            )}`;
         } else {
             innerHTML = `<img src="${
                 this.crossIcon
             }"> ${this._Addon.locale.getString(
                 row
-            )} ${this._Addon.locale.getString("progress.backupfail")}`;
+            )}`;
         }
         ele.innerHTML = innerHTML;
         doc.querySelector("#listbox").appendChild(ele);
@@ -158,10 +159,16 @@ class AddonViews extends AddonModule {
         }
     }
 
-    public completeProgressWindow() {
+    public completeProgressWindow(isExport: boolean) {
+        if (!this.progressWindow) return;
         let doc = this.progressWindow.document;
         doc.querySelector("#progress").setAttribute("value", '100');
         doc.querySelector("#button1").textContent = 'OK';
+        if (isExport) {
+            doc.querySelector("#msg").textContent = OS.Path.join(this._Addon._Zotero.Prefs.get("dataDir"), 'Backup');
+        } else {
+            doc.querySelector("#msg").textContent = this._Addon.locale.getString("complete.msg");
+        }
     }
 }
 

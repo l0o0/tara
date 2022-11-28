@@ -128,13 +128,15 @@ class Utils extends AddonModule {
     }
 
     public async createBackupZIP(isExport = false) {
+        await this._Addon.views.openProgressWindow();
         // Create a temporary folder. Data in backup folder
         let cacheTmp = this._Addon._Zotero.getTempDirectory();
         const tmpDir = cacheTmp.path;
+
         // Remove existing backup data.
         cacheTmp.append("Backup");
         if (cacheTmp.exists()) {
-            cacheTmp.remove(false);
+            cacheTmp.remove(true);
         }
         cacheTmp.append("backup.zip");
         if (cacheTmp.exists()) {
@@ -148,10 +150,12 @@ class Utils extends AddonModule {
         var backupInfos;
         var s: string, t: string;
         const totalTasks: number = this._Addon.views.queue.length;
+        this._Addon._Zotero.debug(`** ${totalTasks}`);
         while (this._Addon.views.queue.length > 0) {
             let task = this._Addon.views.queue.shift();
             try {
                 if (task == 'preferences') {
+                    this._Addon._Zotero.debug("** preferences");
                     backupInfos = await this.getBackupInfos();
                     let backupInfosText = JSON.stringify(backupInfos);
                     // Save preference
@@ -161,21 +165,55 @@ class Utils extends AddonModule {
                         backupInfosText
                     );
                 } else if (task == 'addons') {
+                    this._Addon._Zotero.debug("** addons");
                     s = OS.Path.join(profileDir, "extensions");
                     t = OS.Path.join(outDir, "extensions");
                     await this._Addon._Zotero.File.copyDirectory(s, t);
                 } else if (task == 'styles') {
+                    this._Addon._Zotero.debug("** styles");
                     s = OS.Path.join(dataDir, "styles");
                     t = OS.Path.join(outDir, "styles");
                     await this._Addon._Zotero.File.copyDirectory(s, t);
                 } else if (task == 'translators') {
+                    this._Addon._Zotero.debug("** translators");
                     s = OS.Path.join(dataDir, "translators");
                     t = OS.Path.join(outDir, "translators");
                     await this._Addon._Zotero.File.copyDirectory(s, t);
                 } else if (task == 'locate') {
+                    this._Addon._Zotero.debug("** locate");
                     s = OS.Path.join(dataDir, "locate");
                     t = OS.Path.join(outDir, "locate");
                     await this._Addon._Zotero.File.copyDirectory(s, t);
+                }  else if (task == 'createZIP') {
+                    this._Addon._Zotero.debug("** createZIP");
+                    let saveDir = isExport ? OS.Path.join(dataDir, "Backup") : tmpDir;
+                    await this._Addon._Zotero.File.zipDirectory(
+                        outDir,
+                        OS.Path.join(saveDir, "backup.zip")
+                    );
+                } else if (task == "importAttachment") {
+                    this._Addon._Zotero.debug("** importAttachment");
+                    let zipfile: string = OS.Path.join(
+                        this._Addon._Zotero.Prefs.get("dataDir"),
+                        "tmp",
+                        "backup.zip"
+                    );
+                    let item = this._Addon._Zotero.Items.get(
+                        this._Addon._Zotero.Prefs.get("tara.itemid")
+                    );
+                    let timeString = new Date().toISOString();
+                    let importOptions = {
+                        file: zipfile,
+                        title: timeString + "_backup.zip",
+                        parentItemID: item.id,
+                    };
+                    await this._Addon._Zotero.Attachments.importFromFile(importOptions);
+                } else if (task == 'keepTaraXPI') {
+                    this._Addon._Zotero.debug("** keepTaraXPI");
+                    await this._Addon._Zotero.File.copyToUnique(
+                        OS.Path.join(profileDir, "extensions", "tara.xpi"),
+                        OS.Path.join(outDir, "tara.xpi")
+                    );
                 }
                 let pvalue: string = ((1 - this._Addon.views.queue.length / totalTasks) * 100).toString();
                 pvalue = parseInt(pvalue).toString();
@@ -184,56 +222,51 @@ class Utils extends AddonModule {
                 this._Addon.views.updateProgressWindow(task, false);
             }
         }
-        if (isExport) {
-            await this._Addon._Zotero.File.copyToUnique(
-                OS.Path.join(profileDir, "extensions", "tara.xpi"),
-                OS.Path.join(outDir, "tara.xpi")
-            );
-        }
-        let saveDir = isExport ? OS.Path.join(dataDir, "Backup") : tmpDir;
-        await this._Addon._Zotero.File.zipDirectory(
-            outDir,
-            OS.Path.join(saveDir, "backup.zip")
-        );
+        this._Addon.views.completeProgressWindow(isExport);
         this._Addon._Zotero.debug("Create backup zip complete");
     }
 
     public async createBackupAsAttachment() {
         this._Addon._Zotero.debug("** Tara start create Backup As Attachment");
-        await this._Addon.views.openProgressWindow();
-        // Backup parts in a queue
-        let queue = {
-            "preferences": this._Addon._Zotero.Prefs.get("tara.keepPrefs"),
-            "addons": this._Addon._Zotero.Prefs.get("tara.keepAddon"),
-            "styles": this._Addon._Zotero.Prefs.get("tara.keepCSLs"),
-            "translators": this._Addon._Zotero.Prefs.get("tara.keepTranslators"),
-        };
-        this._Addon.views.queue = Object.keys(queue).filter((k) => queue[k]);
-        const queueLength = this._Addon.views.queue.length;
-        await this.createBackupZIP();
+        // Create Docuement Item for store backup zip file.
         if (this._Addon._Zotero.Prefs.get("tara.itemid") == undefined) {
             let item = new this._Addon._Zotero.Item("document");
             item.setField("title", "Tara_Backup");
             let itemID = await item.saveTx();
             this._Addon._Zotero.Prefs.set("tara.itemid", itemID);
         }
-        const zipfile: string = OS.Path.join(
-            this._Addon._Zotero.Prefs.get("dataDir"),
-            "tmp",
-            "backup.zip"
-        );
-        const item = this._Addon._Zotero.Items.get(
-            this._Addon._Zotero.Prefs.get("tara.itemid")
-        );
-        const timeString = new Date().toISOString();
-        const importOptions = {
-            file: zipfile,
-            title: timeString + "_backup.zip",
-            parentItemID: item.id,
+    
+        // Backup parts in a queue
+        let queue = {
+            "preferences": this._Addon._Zotero.Prefs.get("tara.keepPrefs"),
+            "addons": this._Addon._Zotero.Prefs.get("tara.keepAddon"),
+            "styles": this._Addon._Zotero.Prefs.get("tara.keepCSLs"),
+            "translators": this._Addon._Zotero.Prefs.get("tara.keepTranslators"),
+            "createZIP": true,
+            "importAttachment": true
         };
-        await this._Addon._Zotero.Attachments.importFromFile(importOptions);
-        this._Addon.views.completeProgressWindow();
+        this._Addon.views.queue = Object.keys(queue).filter((k) => queue[k]);
+        await this.createBackupZIP();
         this._Addon._Zotero.debug("** Tara finish create Backup As Attachment");
+    }
+
+    public async exportBackup() {
+        this._Addon._Zotero.debug("** Tara start export backup");
+        let queue = {
+            "preferences": this._Addon._Zotero.Prefs.get("tara.keepPrefs"),
+            "addons": this._Addon._Zotero.Prefs.get("tara.keepAddon"),
+            "styles": this._Addon._Zotero.Prefs.get("tara.keepCSLs"),
+            "translators": this._Addon._Zotero.Prefs.get("tara.keepTranslators"),
+            "createZIP": true,
+            "keepTaraXPI": true
+        };
+        this._Addon.views.queue = Object.keys(queue).filter((k) => queue[k]);
+        await this.createBackupZIP(true);
+        this._Addon._Zotero.debug("** Tara finish export backup");
+    }
+
+    public async restoreFromBackup() {
+        
     }
 }
 
