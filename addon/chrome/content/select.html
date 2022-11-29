@@ -1,39 +1,95 @@
 <!DOCTYPE html>
 <html>
+    <head>
+        <title>Tara</title>
+        <link
+            rel="icon"
+            type="image/x-icon"
+            href="chrome://tara/skin/tara_icon.png"
+        />
+        <style>
+            #box {
+                margin: auto;
+                width: 60%;
+                border: 2px solid #f4d754;
+                padding: 10px;
+                width: 330px;
+                height: 185px;
+                height: 200px;
+            }
 
-<head>
-    <title>Tara</title>
-    <link rel="icon" type="image/x-icon" href="chrome://tara/skin/tara_icon.png" />
-    <style>
-        #box {
-            margin: auto;
-            width: 60%;
-            border: 2px solid #f4d754;
-            padding: 10px;
-            width: 320px;
-            height: 185px;
-            overflow-y: scroll;
-            height: 200px;
-        }
+            #box:hover {
+                overflow-y: auto;
+            }
 
-        #button1 {
-            width: 60px;
-            float: right;
-        }
+            #buttonBlock {
+                margin:auto;
+                width: 60%;
+                width: 320px;
+            }
 
-        .inputlabel {
-            display: block;
-        }
-    </style>
-</head>
+            label {
+                margin-left: 5px;
+            }
 
-<body>
-    <div id="box">
-        <form>
-            <label class="inputlabel"><input type="radio" name="backup" value="A">Option A</label>
-            <label class="inputlabel"><input type="radio" name="backup" value="B">Option B</label>
-        </form>
-    </div>
-</body>
+            input:checked+label{
+                font-weight: bold;
+            }
+        </style>
+        <script>
+            window.onload = function () {
+                var io = window.arguments[0];
+                //var io = {items: ['A','B','C']};
+                for (let filename of io.items) {
+                    let inputNode = document.createElement("input");
+                    let labelNode = document.createElement("label");
+                    let divNode = document.createElement("div");
 
+                    inputNode.setAttribute("type", "radio");
+                    inputNode.setAttribute("name", "item");
+                    inputNode.setAttribute("value", filename);
+                    labelNode.textContent = filename;
+                    divNode.appendChild(inputNode);
+                    divNode.appendChild(labelNode);
+                    
+                    document.querySelector("form").appendChild(divNode);
+                }
+            };
+
+            window.onbeforeunload = function() {
+                var io = window.arguments[0];
+                io.deferred && io.deferred.resolve();
+            };
+
+            window.onclose = function() {
+                var io = window.arguments[0];
+                io.deferred && io.deferred.resolve();
+            };
+
+            OKClick = function () {
+                let node = document.querySelector("input:checked");
+                if (node) {
+                    alert(node.getAttribute("value"));
+                    window.arguments[0]['attachment'] = node.getAttribute("value");
+                }
+                window.close();
+            }
+
+            CancelClick = function () {
+                window.close();
+            }
+
+        </script>
+    </head>
+
+    <body>
+        <div id="box">
+            <form>
+            </form>
+        </div>
+        <div id="buttonBlock">
+            <button id="button1" onclick="CancelClick();">Cancle</button>
+            <button id="button2" onclick="OKClick();">OK</button>
+        </div>
+    </body>
 </html>

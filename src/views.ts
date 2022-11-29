@@ -62,7 +62,7 @@ class AddonViews extends AddonModule {
             "style",
             "list-style-image: url('chrome://tara/skin/restore_icon.png');"
         );
-        restore_menu.setAttribute("oncommand", "alert('Restore');");
+        restore_menu.setAttribute("oncommand", "Zotero.Tara.utils.restoreFromBackup();");
 
         menupopup.appendChild(create_menu);
         menupopup.appendChild(export_menu);
@@ -168,6 +168,29 @@ class AddonViews extends AddonModule {
             doc.querySelector("#msg").textContent = OS.Path.join(this._Addon._Zotero.Prefs.get("dataDir"), 'Backup');
         } else {
             doc.querySelector("#msg").textContent = this._Addon.locale.getString("complete.msg");
+        }
+    }
+
+    public openSelectWindow(io) {
+        this._Addon._Zotero.debug("** Tara open select window ");
+        let win = Services.wm.getMostRecentWindow("navigator:browser");
+    
+        var selectWindow: any;
+        if (win) {
+            selectWindow = win.openDialog(
+                "chrome://tara/content/select.html",
+                "",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=390",
+                io
+            );
+        } else {
+            selectWindow = Services.ww.openWindow(
+                null,
+                "chrome://tara/content/select.html",
+                "",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=390",
+                io
+            );
         }
     }
 }

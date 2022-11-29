@@ -199,7 +199,7 @@ class Utils extends AddonModule {
                         "backup.zip"
                     );
                     let item = this._Addon._Zotero.Items.get(
-                        this._Addon._Zotero.Prefs.get("tara.itemid")
+                        this._Addon._Zotero.Prefs.get("tara.itemID")
                     );
                     let timeString = new Date().toISOString();
                     let importOptions = {
@@ -229,13 +229,13 @@ class Utils extends AddonModule {
     public async createBackupAsAttachment() {
         this._Addon._Zotero.debug("** Tara start create Backup As Attachment");
         // Create Docuement Item for store backup zip file.
-        if (this._Addon._Zotero.Prefs.get("tara.itemid") == undefined 
-            || !this._Addon._Zotero.Items.get(this._Addon._Zotero.Prefs.get("tara.itemid"))
+        if (this._Addon._Zotero.Prefs.get("tara.itemID") == undefined 
+            || !this._Addon._Zotero.Items.get(this._Addon._Zotero.Prefs.get("tara.itemID"))
         ) {
             let item = new this._Addon._Zotero.Item("document");
             item.setField("title", "Tara_Backup");
             let itemID = await item.saveTx();
-            this._Addon._Zotero.Prefs.set("tara.itemid", itemID);
+            this._Addon._Zotero.Prefs.set("tara.itemID", itemID);
         }
     
         // Backup parts in a queue
@@ -268,7 +268,19 @@ class Utils extends AddonModule {
     }
 
     public async restoreFromBackup() {
-        
+        let backupItem = this._Addon._Zotero.Items.get(this._Addon._Zotero.Prefs.get("tara.itemID"));
+        const attachmentIDs  = backupItem.getAttachments();
+        var io = {
+            deferred: this._Addon._Zotero.Promise.defer(),
+        };
+        var files = {};
+        attachmentIDs.reduce((p, r) => {p[this._Addon._Zotero.Items.get(r).getField("title")] = r; return p}, files);
+        io['items'] = Object.keys(files);
+        this._Addon._Zotero.debug(io['items']);
+        this._Addon.views.openSelectWindow(io);
+        await io.deferred.promise;
+        this._Addon._Zotero.debug("** Tara select promise");
+        this._Addon._Zotero.debug(io['attachment']);
     }
 }
 
