@@ -35,6 +35,9 @@ class Utils extends AddonModule {
             "extensions.zotero.sync.storage.verified",
             "extensions.zotero.recentSaveTargets",
             "extensions.zotero.lastViewedFolder", // Last viewd collection
+            "extensions.zotero.scaffold.translatorsDir",
+            "extensions.zotero.scaffold.eslint.enabled",
+            "extensions.zotero.tara.itemID",
         ];
 
         for (let p in prefs) {
@@ -211,7 +214,7 @@ class Utils extends AddonModule {
                 } else if (task == 'keepTaraXPI') {
                     this._Addon._Zotero.debug("** keepTaraXPI");
                     await this._Addon._Zotero.File.copyToUnique(
-                        OS.Path.join(profileDir, "extensions", "tara.xpi"),
+                        OS.Path.join(profileDir, "extensions", "tara@linxzh.com.xpi"),
                         OS.Path.join(outDir, "tara.xpi")
                     );
                 }
@@ -267,6 +270,32 @@ class Utils extends AddonModule {
         this._Addon._Zotero.debug("** Tara finish export backup");
     }
 
+    public async unzipToTemporaryDir(filename: string, tmpDir: string) {
+        this._Addon._Zotero.debug(tmpDir);
+        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(tmpDir);
+        let zipFile = this._Addon._Zotero.File.pathToFile(filename);
+        var zipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].
+				createInstance(Components.interfaces.nsIZipReader);
+        zipReader.open(zipFile);
+
+        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(OS.Path.join(tmpDir, 'translators'));
+        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(OS.Path.join(tmpDir, 'extensions'));
+        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(OS.Path.join(tmpDir, 'styles'));
+        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(OS.Path.join(tmpDir, 'locate')); 
+
+        // Extract files
+		let entries = zipReader.findEntries('*');
+		while (entries.hasMore()) {
+			let entry = entries.getNext();
+			if (entry.substr(-1) === '/') {
+				continue;
+			}
+			let destPath = OS.Path.join(tmpDir, ...entry.split(/\//));
+			zipReader.extract(entry, this._Addon._Zotero.File.pathToFile(destPath));
+		}
+		zipReader.close();
+    }
+
     public async restoreFromBackup() {
         let backupItem = this._Addon._Zotero.Items.get(this._Addon._Zotero.Prefs.get("tara.itemID"));
         const attachmentIDs  = backupItem.getAttachments();
@@ -281,6 +310,78 @@ class Utils extends AddonModule {
         await io.deferred.promise;
         this._Addon._Zotero.debug("** Tara select promise");
         this._Addon._Zotero.debug(io['attachment']);
+        // No item selected 
+        if (!io['attachment']) return ;
+
+        let attachment = this._Addon._Zotero.Items.get(files[io['attachment']]);
+        let cacheTmp = this._Addon._Zotero.getTempDirectory();
+        cacheTmp.append("Backup");
+        if (cacheTmp.exists()) {
+            cacheTmp.remove(true);
+        }
+        const tmpDir = cacheTmp.path;
+        var flag = 1;
+        try {
+            await this.unzipToTemporaryDir(attachment.getFilePath(), tmpDir);
+            // For Styles
+            const dataDir: string = this._Addon._Zotero.Prefs.get("dataDir");
+            const profileDir: string = this._Addon._Zotero.Profile.dir;
+
+            let s = OS.Path.join(tmpDir, "styles");
+            let t = OS.Path.join(dataDir, "styles");
+            await this._Addon._Zotero.File.copyDirectory(s, t);
+            // For Translators
+            s = OS.Path.join(tmpDir, "translators");
+            t = OS.Path.join(dataDir, "translators");
+            await this._Addon._Zotero.File.copyDirectory(s, t);
+            // For locate
+            s = OS.Path.join(tmpDir, "locate");
+            t = OS.Path.join(dataDir, "locate");
+            await this._Addon._Zotero.File.copyDirectory(s, t);
+            // For addons
+            const backupPrefsPath = OS.Path.join(tmpDir, "backup.json");
+            const backupPrefs = JSON.parse(
+                this._Addon._Zotero.File.getContents(backupPrefsPath)
+            );
+            var addonManager = window.AddonManager;
+            for (let addon of backupPrefs.addons) {
+                this._Addon._Zotero.debug(`** Tara install addon ${addon.path}`);
+                if (addon.path.endsWith(".xpi")) {
+                    let xpi = OS.Path.join(tmpDir, "extensions", OS.Path.basename(addon.path));
+                    let _ = addonManager.getInstallForFile(this._Addon._Zotero.File.pathToFile(xpi));
+                    await _.then(e=>e.install());
+                } else {
+                    let isExitst = await OS.File.exists(addon.path);
+                    if (isExitst) {
+                        let s = OS.Path.join(tmpDir, 'extensions', addon.id);
+                        let t = OS.Path.join(profileDir, 'extensions', addon.id);
+                        await this._Addon._Zotero.File.copyToUnique(s, t);
+                    } else {
+                        this._Addon._Zotero.debug(`** Tara missing addon ${addon.path}`);
+                    }
+                }
+            }
+            for (let addon of backupPrefs.addons) {
+                if (addon.userDisabled) {
+                    let a = addonManager.getAddonByID(addon.id);
+                    a.userDisabled = true;
+                }
+            }
+
+            // For preferences
+            for (let pkey in backupPrefs.preferences) {
+                pkey = pkey.replace(/^extensions\./, '');
+                if (pkey.search(/dir|path|folder/i)) {
+                    let isExists = await OS.File.exists(backupPrefs.preferences[pkey]);
+                    if (!isExists) continue;
+                }
+                this._Addon._Zotero.Prefs.set(pkey, backupPrefs.preferences[pkey]);
+            }
+
+        } catch (e) {
+            this._Addon._Zotero.debug(e);
+        }
+
     }
 }
 
