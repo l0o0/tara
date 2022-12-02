@@ -1,5 +1,9 @@
 <!ENTITY zotero.__addonRef__.itemmenu.test.label "插件模板">
-<!ENTITY zotero.__addonRef__.pref.enable.label "开启">
+<!ENTITY zotero.__addonRef__.pref.keepAddon.label "备份已安装插件">
+<!ENTITY zotero.__addonRef__.pref.keepPrefs.label "备份Zotero配置及插件配置">
+<!ENTITY zotero.__addonRef__.pref.keepLocate.label "备份Locate文件夹">
+<!ENTITY zotero.__addonRef__.pref.keepTranslators.label "备份转换器">
+<!ENTITY zotero.__addonRef__.pref.keepCSLs.label "备份CSL文件">
 
 <!ENTITY zotero.__addonRef__.help.version.label "__addonName__ 版本 __buildVersion__">
 <!ENTITY zotero.__addonRef__.help.releasetime.label "Build __buildTime__">

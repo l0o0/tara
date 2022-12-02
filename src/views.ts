@@ -26,10 +26,13 @@ class AddonViews extends AddonModule {
         var create_menu = _window.document.createElement("menuitem");
         var export_menu = _window.document.createElement("menuitem");
         var restore_menu = _window.document.createElement("menuitem");
+        var pref_menu = _window.document.createElement("menuitem");
 
         const createLabel = this._Addon.locale.getString("toolbar.create");
         const exportLabel = this._Addon.locale.getString("toolbar.export");
         const restoreLabel = this._Addon.locale.getString("toolbar.restore");
+        const prefLabel = this._Addon.locale.getString("tool.preference");
+         
 
         create_menu.setAttribute("id", "zotero-tb-tara-create-backup");
         create_menu.setAttribute("label", createLabel);
@@ -63,6 +66,18 @@ class AddonViews extends AddonModule {
             "list-style-image: url('chrome://tara/skin/restore_icon.png');"
         );
         restore_menu.setAttribute("oncommand", "Zotero.Tara.utils.restoreFromBackup();");
+
+        pref_menu.setAttribute("id", "zotero-tb-tara-export-backup");
+        pref_menu.setAttribute("label", prefLabel);
+        pref_menu.setAttribute("class", "menuitem-iconic");
+        pref_menu.setAttribute(
+            "style",
+            "list-style-image: url('chrome://zotero/skin/prefs-general.png');"
+        );
+        pref_menu.setAttribute(
+            "oncommand",
+            "Zotero.Tara.views.openPreference();"
+        );
 
         menupopup.appendChild(create_menu);
         menupopup.appendChild(export_menu);
@@ -171,7 +186,7 @@ class AddonViews extends AddonModule {
         }
     }
 
-    public openSelectWindow(io) {
+    public openSelectWindow(io: object) {
         this._Addon._Zotero.debug("** Tara open select window ");
         let win = Services.wm.getMostRecentWindow("navigator:browser");
     
@@ -192,6 +207,12 @@ class AddonViews extends AddonModule {
                 io
             );
         }
+    }
+
+    public openPreference(): void {
+        window.openDialog('chrome://tara/content/preferences.xul',
+				'zotero-prefs',
+				'chrome,titlebar,toolbar,centerscreen');
     }
 }
 
