@@ -159,7 +159,7 @@ class AddonViews extends AddonModule {
         }
     }
 
-    public completeProgressWindow(isExport: boolean) {
+    public completeProgressWindow(isExport: boolean, msg: string = null) {
         if (!this.progressWindow) return;
         let doc = this.progressWindow.document;
         doc.querySelector("#progress").setAttribute("value", '100');
@@ -167,7 +167,7 @@ class AddonViews extends AddonModule {
         if (isExport) {
             doc.querySelector("#msg").textContent = OS.Path.join(this._Addon._Zotero.Prefs.get("dataDir"), 'Backup');
         } else {
-            doc.querySelector("#msg").textContent = this._Addon.locale.getString("complete.msg");
+            doc.querySelector("#msg").textContent = this._Addon.locale.getString(msg ? msg : "complete.msg");
         }
     }
 
@@ -180,7 +180,7 @@ class AddonViews extends AddonModule {
             selectWindow = win.openDialog(
                 "chrome://tara/content/select.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=390",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=300,width=410",
                 io
             );
         } else {
@@ -188,7 +188,7 @@ class AddonViews extends AddonModule {
                 null,
                 "chrome://tara/content/select.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=390",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=300,width=410",
                 io
             );
         }

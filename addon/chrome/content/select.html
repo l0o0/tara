@@ -8,21 +8,23 @@
             href="chrome://tara/skin/tara_icon.png"
         />
         <style>
+            p {
+                margin-bottom: 4px;
+            }
             #box {
                 margin: auto;
                 width: 60%;
                 border: 2px solid #f4d754;
                 padding: 10px;
-                width: 350px;
+                width: 360px;
                 height: 185px;
                 height: 200px;
                 overflow-y: auto;
             }
 
             #buttonBlock {
-                margin:auto;
-                width: 60%;
-                width: 320px;
+                margin-top: 5px;
+                float: right;
             }
 
             label {
@@ -37,6 +39,7 @@
             window.onload = function () {
                 var io = window.arguments[0];
                 //var io = {items: ['A','B','C']};
+                document.querySelector('p').textContent = io.title;
                 for (let filename of io.items) {
                     let inputNode = document.createElement("input");
                     let labelNode = document.createElement("label");
@@ -79,6 +82,7 @@
     </head>
 
     <body>
+        <p id="title"></p>
         <div id="box">
             <form>
             </form>
