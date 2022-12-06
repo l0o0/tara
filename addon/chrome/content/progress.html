@@ -42,6 +42,12 @@
                 padding-top: 4px;
             }
         </style>
+        <script>
+            window.onload = function() {
+                var io = window.arguments[0];
+                if (io.header) document.querySelector("#status").textContent = io.header;
+            }
+        </script>
     </head>
 
     <body>

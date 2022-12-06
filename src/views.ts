@@ -102,21 +102,23 @@ class AddonViews extends AddonModule {
         _window.document.querySelector("#zotero-tb-tara")?.remove();
     }
 
-    public async openProgressWindow() {
+    public async openProgressWindow(header=null) {
         this._Addon._Zotero.debug("** Tara open window ");
         let win = Services.wm.getMostRecentWindow("navigator:browser");
         if (win) {
             this.progressWindow = win.openDialog(
                 "chrome://tara/content/progress.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=380"
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=380",
+                {header: header}
             );
         } else {
             this.progressWindow = Services.ww.openWindow(
                 null,
                 "chrome://tara/content/progress.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=380"
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=380",
+                {header: header}
             );
         }
         // Reset progressWindow when progres window is closed.
