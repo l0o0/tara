@@ -136,7 +136,7 @@ class Utils extends AddonModule {
     }
 
     public async createBackupZIP(isExport = false) {
-        await this._Addon.views.openProgressWindow();
+        await this._Addon.views.openProgressWindow(this._Addon.locale.getString("backup.header"));
         // Create a temporary folder. Data in backup folder
         let cacheTmp = this._Addon._Zotero.getTempDirectory();
         const tmpDir = cacheTmp.path;
@@ -195,7 +195,7 @@ class Utils extends AddonModule {
                 } else if (task == "createZIP") {
                     this._Addon._Zotero.debug("** createZIP");
                     let saveDir = isExport
-                        ? OS.Path.join(dataDir, "Backup")
+                        ? this._Addon._Zotero.Prefs.get("tara.exportDir")
                         : tmpDir;
                     await this._Addon._Zotero.File.zipDirectory(
                         outDir,
@@ -228,7 +228,7 @@ class Utils extends AddonModule {
                             "extensions",
                             "tara@linxzh.com.xpi"
                         ),
-                        OS.Path.join(outDir, "tara.xpi")
+                        OS.Path.join(this._Addon._Zotero.Prefs.get("tara.exportDir"), "tara.xpi")
                     );
                 }
                 let pvalue = this.getProgress(this._Addon.views.queue.length, totalTasks)
@@ -368,7 +368,7 @@ class Utils extends AddonModule {
         const dataDir: string =
                     this._Addon._Zotero.Prefs.get("dataDir");
         const profileDir: string = this._Addon._Zotero.Profile.dir;
-        await this._Addon.views.openProgressWindow();
+        await this._Addon.views.openProgressWindow(this._Addon.locale.getString("restore.header"));
         while (this._Addon.views.queue.length > 0) {
             let task = this._Addon.views.queue.shift();
             let s, t;

@@ -28,6 +28,7 @@ class AddonEvents extends AddonModule {
             "tara.keepCSLs": true,
             "tara.keepTranslators": true,
             "tara.keepLocale": true,
+            "tara.exportDir": OS.Path.join(this._Addon._Zotero.Prefs.get("dataDir"), 'Backup')
         };
         for (let p in initPrefs) {
             if (typeof this._Addon._Zotero.Prefs.get(p) === "undefined") {
