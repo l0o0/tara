@@ -211,7 +211,7 @@ class Utils extends AddonModule {
                     let item = this._Addon._Zotero.Items.get(
                         this._Addon._Zotero.Prefs.get("tara.itemID")
                     );
-                    let timeString = new Date().toISOString();
+                    let timeString = new Date().toLocaleString();
                     let importOptions = {
                         file: zipfile,
                         title: timeString + "_backup.zip",
@@ -338,6 +338,7 @@ class Utils extends AddonModule {
             return p;
         }, files);
         io["items"] = Object.keys(files);
+        io["items"].sort().reverse();
         this._Addon._Zotero.debug(io["items"]);
         this._Addon.views.openSelectWindow(io);
         await io.deferred.promise;
@@ -435,7 +436,24 @@ class Utils extends AddonModule {
                 } else if (task == 'locate') {
                     s = OS.Path.join(tmpDir, "locate");
                     t = OS.Path.join(dataDir, "locate");
-                    await this._Addon._Zotero.File.copyDirectory(s, t);
+                    await this._Addon._Zotero.File.iterateDirectory(s, async function(entry) {
+                        if (entry.name === 'engines.json') {
+                            let contentsBackup = this._Addon._Zotero.File.getContents(OS.Path.join(s, entry.name));
+                            let enginesBackup = JSON.parse(contentsBackup);
+                            let contents = this._Addon._Zotero.File.getContents(OS.Path.join(t, entry.name));
+                            let engines = JSON.parse(contents);
+                            let allContents = enginesBackup.concat(engines);
+                            this._Addon._Zotero.File.putContents(
+                                this._Addon._Zotero.File.pathToFile(OS.Path.join(t, entry.name)),
+                                allContents
+                            );
+                        } else {
+                            await this._Addon._Zotero.File.copyToUnique(
+                                OS.Path.join(s, entry.name),
+                                OS.Path.join(t, entry.name)
+                            );
+                        }
+                    });
                 } else if (task == 'preferences') {
                     const backupPrefsPath = OS.Path.join(tmpDir, "backup.json");
                     const backupPrefs = JSON.parse(

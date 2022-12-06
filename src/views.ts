@@ -82,6 +82,7 @@ class AddonViews extends AddonModule {
         menupopup.appendChild(create_menu);
         menupopup.appendChild(export_menu);
         menupopup.appendChild(restore_menu);
+        menupopup.appendChild(pref_menu);
 
         tool_button.id = "zotero-tb-tara";
         tool_button.setAttribute("type", "menu");
@@ -210,7 +211,8 @@ class AddonViews extends AddonModule {
     }
 
     public openPreference(): void {
-        window.openDialog('chrome://tara/content/preferences.xul',
+        let win = Services.wm.getMostRecentWindow("navigator:browser");
+        win.openDialog('chrome://tara/content/preferences.xul',
 				'zotero-prefs',
 				'chrome,titlebar,toolbar,centerscreen');
     }

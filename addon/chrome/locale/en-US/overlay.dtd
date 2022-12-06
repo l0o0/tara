@@ -1,5 +1,10 @@
-<!ENTITY zotero.__addonRef__.itemmenu.test.label "addon template">
-<!ENTITY zotero.__addonRef__.pref.enable.label "Enable">
+<!ENTITY zotero.__addonRef__.pref.caption.label "Backup setting">
+<!ENTITY zotero.__addonRef__.pref.keepAddon.label "Backup Addons">
+<!ENTITY zotero.__addonRef__.pref.keepPrefs.label "Preferences for Zotero and addons">
+<!ENTITY zotero.__addonRef__.pref.keepLocate.label "Backup locate folder">
+<!ENTITY zotero.__addonRef__.pref.keepTranslators.label "Backup translators">
+<!ENTITY zotero.__addonRef__.pref.keepCSLs.label "Backup styles folder">
+<!ENTITY zotero.__addonRef__.pref.title "Tara Preferences">
 
 <!ENTITY zotero.__addonRef__.help.version.label "__addonName__ VERSION __buildVersion__">
 <!ENTITY zotero.__addonRef__.help.releasetime.label "Build __buildTime__">
