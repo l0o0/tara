@@ -2,11 +2,27 @@ import { Addon } from "./addon";
 import AddonModule from "./module";
 
 Components.utils.import("resource://gre/modules/osfile.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
+Components.utils.import("resource://gre/modules/Services.jsm");
+Components.utils.import("resource://gre/modules/AddonManager.jsm");
 
 class Utils extends AddonModule {
     constructor(parent: Addon) {
         super(parent);
+    }
+
+    public async createBackupItem() {
+        // Create Docuement Item for store backup zip file.
+        if (
+            this._Addon._Zotero.Prefs.get("tara.itemID") == undefined ||
+            !this._Addon._Zotero.Items.get(
+                this._Addon._Zotero.Prefs.get("tara.itemID")
+            )
+        ) {
+            let item = new this._Addon._Zotero.Item("document");
+            item.setField("title", "Tara_Backup");
+            let itemID = await item.saveTx();
+            this._Addon._Zotero.Prefs.set("tara.itemID", itemID);
+        }
     }
 
     public getPrefsPath() {
@@ -150,7 +166,8 @@ class Utils extends AddonModule {
         if (cacheTmp.exists()) {
             cacheTmp.remove(false);
         }
-
+        // Create backup item
+        await this.createBackupItem();
         const outDir = OS.Path.join(tmpDir, "Backup");
         await this._Addon._Zotero.File.createDirectoryIfMissingAsync(outDir);
         const profileDir: string = this._Addon._Zotero.Profile.dir;
@@ -243,18 +260,6 @@ class Utils extends AddonModule {
 
     public async createBackupAsAttachment() {
         this._Addon._Zotero.debug("** Tara start create Backup As Attachment");
-        // Create Docuement Item for store backup zip file.
-        if (
-            this._Addon._Zotero.Prefs.get("tara.itemID") == undefined ||
-            !this._Addon._Zotero.Items.get(
-                this._Addon._Zotero.Prefs.get("tara.itemID")
-            )
-        ) {
-            let item = new this._Addon._Zotero.Item("document");
-            item.setField("title", "Tara_Backup");
-            let itemID = await item.saveTx();
-            this._Addon._Zotero.Prefs.set("tara.itemID", itemID);
-        }
 
         // Backup parts in a queue
         let queue = {
@@ -324,37 +329,45 @@ class Utils extends AddonModule {
     }
 
     public async restoreFromBackup() {
-        let backupItem = this._Addon._Zotero.Items.get(
-            this._Addon._Zotero.Prefs.get("tara.itemID")
-        );
-        const attachmentIDs = backupItem.getAttachments();
+        let backupItemID = this._Addon._Zotero.Prefs.get("tara.itemID");
         var io = {
             title: this._Addon.locale.getString("select.title"),
             deferred: this._Addon._Zotero.Promise.defer(),
         };
-        var files = {};
-        attachmentIDs.reduce((p, r) => {
-            p[this._Addon._Zotero.Items.get(r).getField("title")] = r;
-            return p;
-        }, files);
-        io["items"] = Object.keys(files);
-        io["items"].sort().reverse();
-        this._Addon._Zotero.debug(io["items"]);
-        this._Addon.views.openSelectWindow(io);
-        await io.deferred.promise;
-        this._Addon._Zotero.debug("** Tara select promise");
-        this._Addon._Zotero.debug(io["attachment"]);
-        // No item selected
-        if (!io["attachment"]) return;
-
-        let attachment = this._Addon._Zotero.Items.get(files[io["attachment"]]);
+        var attachment;
+        if (backupItemID && this._Addon._Zotero.Items.get(backupItemID) && this._Addon._Zotero.Items.get(backupItemID).getAttachments()) {
+            let backupItem = this._Addon._Zotero.Items.get(backupItemID);
+            const attachmentIDs = backupItem.getAttachments();
+            var files = {};
+            attachmentIDs.reduce((p, r) => {
+                p[this._Addon._Zotero.Items.get(r).getField("title")] = r;
+                return p;
+            }, files);
+            io["items"] = Object.keys(files);
+            io["items"].sort().reverse();
+            this._Addon._Zotero.debug(io["items"]);
+            this._Addon.views.openSelectWindow(io);
+            await io.deferred.promise;
+            this._Addon._Zotero.debug("** Tara select promise");
+            this._Addon._Zotero.debug(io["attachment"]);
+            // No item selected
+            if (!io["attachment"]) return;
+            attachment = this._Addon._Zotero.Items.get(files[io["attachment"]]);
+        } else { // Inport from an export backup zip
+            await this.createBackupItem();
+            backupItemID = this._Addon._Zotero.Prefs.get("tara.itemID");
+            let zoteroPane = this._Addon._Zotero.getActiveZoteroPane();
+            await zoteroPane.addAttachmentFromDialog(false, backupItemID);
+            let attachmentID = this._Addon._Zotero.Items.get(backupItemID).getAttachments()[0];
+            attachment = this._Addon._Zotero.Items.get(attachmentID);
+        }
+        
         let cacheTmp = this._Addon._Zotero.getTempDirectory();
         cacheTmp.append("Backup");
         if (cacheTmp.exists()) {
             cacheTmp.remove(true);
         }
         const tmpDir = cacheTmp.path;
-        var flag = 1;
         let queue = {
             unzip: true,
             addons: this._Addon._Zotero.Prefs.get("tara.keepAddon"),
@@ -383,7 +396,6 @@ class Utils extends AddonModule {
                     const backupPrefs = JSON.parse(
                         this._Addon._Zotero.File.getContents(backupPrefsPath)
                     );
-                    let addonManager = window.AddonManager;
                     for (let addon of backupPrefs.addons) {
                         this._Addon._Zotero.debug(
                             `** Tara install addon ${addon.path}`
@@ -394,13 +406,21 @@ class Utils extends AddonModule {
                                 "extensions",
                                 OS.Path.basename(addon.path)
                             );
-                            let _ = addonManager.getInstallForFile(
-                                this._Addon._Zotero.File.pathToFile(xpi)
-                            );
-                            await _.then((e) => e.install());
+                            let xpiFile = this._Addon._Zotero.File.pathToFile(xpi);
+                            // If addon is installed, set userDisabled
+                            AddonManager.getAddonByID(addon.id, function(a) {
+                                if (a) {
+                                    a.userDisabled = addon.userDisabled;
+                                } else {
+                                    AddonManager.getInstallForFile(
+                                        xpiFile,
+                                        (a) => a.install()
+                                    );
+                                }
+                            });
                         } else {
-                            let isExitst = await OS.File.exists(addon.path);
-                            if (isExitst) {
+                            let isExist = await OS.File.exists(addon.path);
+                            if (isExist) {
                                 let s = OS.Path.join(
                                     tmpDir,
                                     "extensions",
@@ -411,18 +431,15 @@ class Utils extends AddonModule {
                                     "extensions",
                                     addon.id
                                 );
-                                await this._Addon._Zotero.File.copyToUnique(s, t);
+                                let tExists = await OS.File.exists(t);
+                                if (!tExists) {
+                                    await this._Addon._Zotero.File.copyToUnique(s, t);
+                                }
                             } else {
                                 this._Addon._Zotero.debug(
                                     `** Tara missing addon ${addon.path}`
                                 );
                             }
-                        }
-                    }
-                    for (let addon of backupPrefs.addons) {
-                        if (addon.userDisabled) {
-                            let a = addonManager.getAddonByID(addon.id);
-                            a.userDisabled = true;
                         }
                     }
                 } else if (task == 'styles') {

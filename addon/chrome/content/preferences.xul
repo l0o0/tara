@@ -7,7 +7,7 @@
 <prefwindow id="__addonRef__-prefs" title="&zotero.__addonRef__.pref.title;"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
     <script src="chrome://zotero/content/include.js" />
-    <prefpane id="zotero-prefpane-__addonRef__" insertafter="zotero-prefpane-advanced" label="__addonName__" image="chrome: __addonRef__ skin favicon.png">
+    <prefpane id="zotero-prefpane-__addonRef__" insertafter="zotero-prefpane-advanced" label="__addonName__" image="chrome://__addonRef__/skin/tara.png">
         <preferences id="zotero-preferences-__addonRef__">
             <preference id="pref-__addonRef__-keepAddon" name="extensions.zotero.__addonRef__.keepAddon" type="bool" />
             <preference id="pref-__addonRef__-keepCSLs" name="extensions.zotero.__addonRef__.keepCSLs" type="bool" />
