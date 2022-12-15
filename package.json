@@ -3,7 +3,7 @@
   "addonName": "Tara",
   "addonID": "tara@linxzh.com",
   "addonRef": "tara",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "descriptionzhCN": "Zotero配置，插件等数据备份插件",
   "descriptionenUS": "Zotero addon for backup preferences, addon, translator, styles",
   "main": "src/index.js",
