@@ -1,8 +1,6 @@
 {
   "name": "tara",
-  "version": "1.0.0",
-  "descriptionzhCN": "Zotero配置，插件等数据备份插件",
-  "descriptionenUS": "Zotero addon for backup preferences, addon, translator, styles",
+  "version": "1.0.0-1",
   "config": {
     "addonName": "Tara",
     "addonID": "tara@linxzh.com",

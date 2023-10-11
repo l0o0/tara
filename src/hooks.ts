@@ -5,6 +5,7 @@ import {
   PromptExampleFactory,
   UIExampleFactory,
 } from "./modules/examples";
+import { UI } from "./modules/ui";
 import { config } from "../package.json";
 import { getString, initLocale } from "./utils/locale";
 import { registerPrefsScripts } from "./modules/preferenceScript";
@@ -29,42 +30,10 @@ async function onMainWindowLoad(win: Window): Promise<void> {
   // Create ztoolkit for every window
   addon.data.ztoolkit = createZToolkit();
 
-  const popupWin = new ztoolkit.ProgressWindow(config.addonName, {
-    closeOnClick: true,
-    closeTime: -1,
-  })
-    .createLine({
-      text: getString("startup-begin"),
-      type: "default",
-      progress: 0,
-    })
-    .show();
-
-  KeyExampleFactory.registerShortcuts();
-
   await Zotero.Promise.delay(1000);
-  popupWin.changeLine({
-    progress: 30,
-    text: `[30%] ${getString("startup-begin")}`,
-  });
 
-  UIExampleFactory.registerStyleSheet();
-
-  UIExampleFactory.registerRightClickMenuItem();
-
-  UIExampleFactory.registerRightClickMenuPopup();
-
-  UIExampleFactory.registerWindowMenuWithSeparator();
-
-  await UIExampleFactory.registerExtraColumn();
-
-  await UIExampleFactory.registerExtraColumnWithCustomCell();
-
-  await UIExampleFactory.registerCustomItemBoxRow();
-
-  UIExampleFactory.registerLibraryTabPanel();
-
-  await UIExampleFactory.registerReaderTabPanel();
+  //UI.registerToolbarMenu();
+  UI.registerToolsMenu();
 
   PromptExampleFactory.registerNormalCommandExample();
 
@@ -73,14 +42,6 @@ async function onMainWindowLoad(win: Window): Promise<void> {
   PromptExampleFactory.registerConditionalCommandExample();
 
   await Zotero.Promise.delay(1000);
-
-  popupWin.changeLine({
-    progress: 100,
-    text: `[100%] ${getString("startup-finish")}`,
-  });
-  popupWin.startCloseTimer(5000);
-
-  addon.hooks.onDialogEvents("dialogExample");
 }
 
 async function onMainWindowUnload(win: Window): Promise<void> {

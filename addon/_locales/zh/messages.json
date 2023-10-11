@@ -1,0 +1,10 @@
+{
+  "name": {
+    "description": "name",
+    "message": "蒲公英"
+  },
+  "description": {
+    "description": "description",
+    "message": "备份和恢复 Zotero 常用设置，插件，转换器，CSL引文格式"
+  }
+}

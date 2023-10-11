@@ -1,3 +1,5 @@
-/* eslint-disable no-undef */
-pref("__prefsPrefix__.enable", true);
-pref("__prefsPrefix__.input", "This is input");
+pref("__prefsPrefix__.keepAddon", true);
+pref("__prefsPrefix__.keepPrefs", true);
+pref("__prefsPrefix__.keepCSLs", true);
+pref("__prefsPrefix__.keepTranslators", true);
+pref("__prefsPrefix__.keepLocale", true);

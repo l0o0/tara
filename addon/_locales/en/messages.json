@@ -1,0 +1,10 @@
+{
+  "name": {
+    "description": "name",
+    "message": "Tara"
+  },
+  "description": {
+    "description": "description",
+    "message": "Backup and restore Zotero common preferences, addons, translators, CSLs"
+  }
+}
