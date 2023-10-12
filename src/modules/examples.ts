@@ -76,7 +76,7 @@ export class BasicExampleFactory {
       pluginID: config.addonID,
       src: rootURI + "chrome/content/preferences.xhtml",
       label: getString("prefs-title"),
-      image: `chrome://${config.addonRef}/content/icons/favicon.png`,
+      image: `chrome://${config.addonRef}/content/icons/tara_icon.png`,
       defaultXUL: true,
     };
     ztoolkit.PreferencePane.register(prefOptions);

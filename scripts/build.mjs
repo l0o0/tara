@@ -16,7 +16,7 @@ import replaceInFile from "replace-in-file";
 const { replaceInFileSync } = replaceInFile;
 import details from "../package.json" assert { type: "json" };
 
-const { name, author, description, homepage, version, config } = details;
+const { name, author, homepage, version, config } = details;
 
 const t = new Date();
 const buildTime = dateFormat("YYYY-mm-dd HH:MM:SS", new Date());

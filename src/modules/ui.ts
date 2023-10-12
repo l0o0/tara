@@ -100,61 +100,6 @@ export class UI {
       ],
     });
 
-    const create_menu = doc.createElement("menuitem");
-    const export_menu = doc.createElement("menuitem");
-    const import_menu = doc.createElement("menuitem");
-    const restore_menu = doc.createElement("menuitem");
-    const pref_menu = doc.createElement("menuitem");
-
-    create_menu.setAttribute("id", "zotero-tb-tara-create-backup");
-    create_menu.setAttribute("class", "menuitem-iconic");
-    create_menu.setAttribute(
-      "style",
-      "list-style-image: url('chrome://tara/skin/create_icon.png');",
-    );
-    create_menu.setAttribute(
-      "oncommand",
-      "Zotero.Tara.utils.createBackupAsAttachment();",
-    );
-
-    import_menu.setAttribute("id", "zotero-tb-tara-import-backup");
-    import_menu.setAttribute("class", "menuitem-iconic");
-    import_menu.setAttribute(
-      "style",
-      "list-style-image: url('chrome://tara/skin/import_icon.png');",
-    );
-    import_menu.setAttribute(
-      "oncommand",
-      "Zotero.Tara.utils.importFromBackup();",
-    );
-
-    export_menu.setAttribute("id", "zotero-tb-tara-export-backup");
-    export_menu.setAttribute("class", "menuitem-iconic");
-    export_menu.setAttribute(
-      "style",
-      "list-style-image: url('chrome://tara/skin/export_icon.png');",
-    );
-    export_menu.setAttribute("oncommand", "Zotero.Tara.utils.exportBackup();");
-
-    restore_menu.setAttribute("id", "zotero-tb-tara-restore-backup");
-    restore_menu.setAttribute("class", "menuitem-iconic");
-    restore_menu.setAttribute(
-      "style",
-      "list-style-image: url('chrome://tara/skin/restore_icon.png');",
-    );
-    restore_menu.setAttribute(
-      "oncommand",
-      "Zotero.Tara.utils.restoreFromBackup();",
-    );
-
-    pref_menu.setAttribute("oncommand", "Zotero.Tara.views.openPreference();");
-
-    menupopup.appendChild(create_menu);
-    menupopup.appendChild(import_menu);
-    menupopup.appendChild(export_menu);
-    menupopup.appendChild(restore_menu);
-    menupopup.appendChild(pref_menu);
-
     tool_button.appendChild(menupopup);
     doc.querySelector("#zotero-collections-toolbar")?.appendChild(tool_button);
   }

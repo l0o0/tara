@@ -7,7 +7,7 @@ import {
 } from "./modules/examples";
 import { UI } from "./modules/ui";
 import { config } from "../package.json";
-import { getString, initLocale } from "./utils/locale";
+import { initLocale } from "./utils/locale";
 import { registerPrefsScripts } from "./modules/preferenceScript";
 import { createZToolkit } from "./utils/ztoolkit";
 

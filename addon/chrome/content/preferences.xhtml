@@ -6,25 +6,51 @@
   onload="Zotero.__addonInstance__.hooks.onPrefsEvent('load', {window})"
 >
   <groupbox>
-    <label><html:h2 data-l10n-id="pref-title"></html:h2></label>
+    <label><html:h2 data-l10n-id="caption-label"></html:h2></label>
     <checkbox
-      id="zotero-prefpane-__addonRef__-enable"
-      preference="extensions.zotero.__addonRef__.enable"
-      data-l10n-id="pref-enable"
+      id="zotero-prefpane-__addonRef__-keepAddon"
+      preference="__prefsPrefix__.keepAddon"
+      data-l10n-id="keepAddon-label"
+      native="true"
     />
-    <hbox>
-      <html:label
-        for="zotero-prefpane-__addonRef__-input"
-        data-l10n-id="pref-input"
-      ></html:label>
+    <checkbox
+      id="zotero-prefpane-__addonRef__-keepPrefs"
+      preference="__prefsPrefix__.keepPrefs"
+      data-l10n-id="keepPrefs-label"
+      native="true"
+    />
+    <checkbox
+      id="zotero-prefpane-__addonRef__-keepCSLs"
+      preference="__prefsPrefix__.keepCSLs"
+      data-l10n-id="keepCSLs-label"
+      native="true"
+    />
+    <checkbox
+      id="zotero-prefpane-__addonRef__-keepTranslators"
+      preference="__prefsPrefix__.keepTranslators"
+      data-l10n-id="keepTranslators-label"
+      native="true"
+    />
+    <checkbox
+      id="zotero-prefpane-__addonRef__-keepLocate"
+      preference="__prefsPrefix__.keepLocate"
+      data-l10n-id="keepLocate-label"
+      native="true"
+    />
+
+    <hbox style="display: flex; align-items: center">
+      <html:label data-l10n-id="choose-exportDir"></html:label>
       <html:input
+        style="flex: 1"
         type="text"
-        id="zotero-prefpane-__addonRef__-input"
-        preference="extensions.zotero.__addonRef__.input"
+        id="tara-exportDir"
+        preference="__prefsPrefix__.exportDir"
       ></html:input>
-    </hbox>
-    <hbox class="virtualized-table-container" flex="1" height="300px">
-      <html:div id="__addonRef__-table-container" />
+      <button
+        data-l10n-id="choose"
+        id="tara-choose-folder-button"
+        native="true"
+      />
     </hbox>
   </groupbox>
 </vbox>
