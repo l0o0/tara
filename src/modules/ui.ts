@@ -104,3 +104,51 @@ export class UI {
     doc.querySelector("#zotero-collections-toolbar")?.appendChild(tool_button);
   }
 }
+
+export default class Progress {
+  constructor() {}
+
+  getProgress(progress: number, total: number): string {
+    return ((1 - progress / total) * 100).toString();
+  }
+
+  async openProgressWindow(header = null) {
+    ztoolkit.log("open progress window");
+    const win = Services.wm.getMostRecentWindow("navigator:browser");
+    let progressWindow: Window | undefined;
+    if (win) {
+      progressWindow = win.openDialog(
+        "chrome://tara/content/progress.html",
+        "",
+        "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=380",
+        { header: header },
+      );
+    } else {
+      progressWindow = Services.ww.openWindow(
+        null,
+        "chrome://tara/content/progress.html",
+        "",
+        "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=380",
+        { header: header },
+      );
+    }
+    // Reset progressWindow when progres window is closed.
+    // For window click close in an element
+    (progressWindow as Window).onbeforeunload = (e) => {
+      progressWindow = undefined;
+      const queue = [];
+    };
+    // For close button in header bar
+    progressWindow.onclose = (e) => {
+      progressWindow = undefined;
+      queue = [];
+    };
+    let t = 0;
+    // Wait for window
+    while (t < 500 && progressWindow.document.readyState !== "complete") {
+      await zotero.Promise.delay(10);
+      t += 1;
+      zotero.debug("** Tara wait ");
+    }
+  }
+}
