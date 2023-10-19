@@ -106,7 +106,17 @@ export class UI {
 }
 
 export default class Progress {
-  constructor() {}
+  public queue: Array<string> = [];
+  public totalTasksNum: number;
+  public progressWindow?: Window;
+  private tickIcon: string;
+  private crossIcon: string;
+
+  constructor() {
+    (this.queue = ["aaa"]), (this.totalTasksNum = 0);
+    this.tickIcon = "chrome://zotero/skin/tick.png";
+    this.crossIcon = "chrome://zotero/skin/cross.png";
+  }
 
   getProgress(progress: number, total: number): string {
     return ((1 - progress / total) * 100).toString();
@@ -139,16 +149,38 @@ export default class Progress {
       const queue = [];
     };
     // For close button in header bar
-    progressWindow.onclose = (e) => {
+    (progressWindow as Window).onclose = (e) => {
       progressWindow = undefined;
-      queue = [];
+      const queue = [];
     };
     let t = 0;
     // Wait for window
-    while (t < 500 && progressWindow.document.readyState !== "complete") {
-      await zotero.Promise.delay(10);
+    while (
+      t < 500 &&
+      (progressWindow as Window).document.readyState !== "complete"
+    ) {
+      await ztoolkit.getGlobal("Zotero").Promise.delay(10);
       t += 1;
-      zotero.debug("** Tara wait ");
+      ztoolkit.log("** Tara wait ");
+    }
+    this.progressWindow = progressWindow!;
+  }
+
+  updateProgressWindow(row: string, status: boolean, value: string = ""): void {
+    if (!this.progressWindow) return;
+    const doc = this.progressWindow.document;
+    const ele = doc.createElement("li");
+    ele.setAttribute("id", row);
+    let innerHTML: string;
+    if (status) {
+      innerHTML = `<img src="${this.tickIcon}"> ${getString(row)}`;
+    } else {
+      innerHTML = `<img src="${this.crossIcon}"> ${getString(row)}`;
+    }
+    ele.innerHTML = innerHTML;
+    doc.querySelector("#listbox")!.appendChild(ele);
+    if (value != "") {
+      doc.querySelector("#progress")!.setAttribute("value", value);
     }
   }
 }

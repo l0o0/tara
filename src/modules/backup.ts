@@ -1,5 +1,5 @@
-import Addon from "../addon";
 import { getString } from "../utils/locale";
+import { getPref } from "../utils/prefs";
 
 const { AddonManager } = ChromeUtils.import(
   "resource://gre/modules/AddonManager.jsm",
@@ -12,6 +12,24 @@ interface AddonInfo {
 }
 
 const zotero = ztoolkit.getGlobal("Zotero");
+
+export function getQueue() {
+  const qPrefs = [
+    "keepAddon",
+    "keepCSLs",
+    "keepTranslators",
+    "keepLocate",
+    "keepPrefs",
+  ];
+
+  const queue = ["unzip"];
+  qPrefs.forEach((i) => {
+    if (getPref(i)) {
+      queue.push(i);
+    }
+  });
+  return queue;
+}
 
 export async function getFilteredPrefs() {
   const prefs = await readPrefsFromFile();

@@ -1,7 +1,6 @@
-import { ColumnOptions } from "zotero-plugin-toolkit/dist/helpers/virtualizedTable";
-import { DialogHelper } from "zotero-plugin-toolkit/dist/helpers/dialog";
 import hooks from "./hooks";
 import { createZToolkit } from "./utils/ztoolkit";
+import Progress from "./modules/ui";
 
 class Addon {
   public data: {
@@ -15,8 +14,7 @@ class Addon {
     prefs?: {
       window: Window;
     };
-    queue?: [];
-    dialog?: DialogHelper;
+    progress: any;
   };
   // Lifecycle hooks
   public hooks: typeof hooks;
@@ -28,6 +26,7 @@ class Addon {
       alive: true,
       env: __env__,
       ztoolkit: createZToolkit(),
+      progress: new Progress(),
     };
     this.hooks = hooks;
     this.api = {};
