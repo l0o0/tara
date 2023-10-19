@@ -15,6 +15,7 @@ class Addon {
     prefs?: {
       window: Window;
     };
+    queue?: [];
     dialog?: DialogHelper;
   };
   // Lifecycle hooks

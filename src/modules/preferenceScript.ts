@@ -1,6 +1,5 @@
 import { FilePickerHelper } from "zotero-plugin-toolkit/dist/helpers/filePicker";
 import { config } from "../../package.json";
-import { getString } from "../utils/locale";
 import { setPref } from "../utils/prefs";
 
 export async function registerPrefsScripts(_window: Window) {
