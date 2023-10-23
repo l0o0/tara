@@ -1,5 +1,7 @@
 import { config } from "../../package.json";
 import { getString } from "../utils/locale";
+import { getPref } from "../utils/prefs";
+import { createBackupAsAttachment } from "./backup";
 
 export class UI {
   static registerToolsMenu() {
@@ -10,30 +12,33 @@ export class UI {
 
     ztoolkit.Menu.register("menuTools", {
       tag: "menu",
-      label: getString("menuitem-tara"),
+      label: getString("menuitem"),
       icon: iconbase + "/tara_icon.png",
       children: [
         {
           tag: "menuitem",
-          label: getString("menuitem-create"),
+          label: getString("toolbar-create"),
           icon: `${iconbase}/create_icon.png`,
-          oncommand: "alert('create');",
+          commandListener: () => {
+            ztoolkit.log("**************createBackupAsAttachment");
+            createBackupAsAttachment();
+          },
         },
         {
           tag: "menuitem",
-          label: getString("menuitem-export"),
+          label: getString("toolbar-export"),
           icon: `${iconbase}/export_icon.png`,
           oncommand: "alert('export');",
         },
         {
           tag: "menuitem",
-          label: getString("menuitem-import"),
+          label: getString("toolbar-import"),
           icon: `${iconbase}/import_icon.png`,
           oncommand: "alert('import');",
         },
         {
           tag: "menuitem",
-          label: getString("menuitem-restore"),
+          label: getString("toolbar-restore"),
           icon: `${iconbase}/restore_icon.png`,
           oncommand: "alert('restore');",
         },
@@ -106,14 +111,14 @@ export class UI {
 }
 
 export default class Progress {
-  public queue: Array<string> = [];
+  public queue?: Array<string> = [];
   public totalTasksNum: number;
   public progressWindow?: Window;
   private tickIcon: string;
   private crossIcon: string;
 
   constructor() {
-    (this.queue = ["aaa"]), (this.totalTasksNum = 0);
+    this.totalTasksNum = 0;
     this.tickIcon = "chrome://zotero/skin/tick.png";
     this.crossIcon = "chrome://zotero/skin/cross.png";
   }
@@ -125,16 +130,15 @@ export default class Progress {
   async openProgressWindow(header = null) {
     ztoolkit.log("open progress window");
     const win = Services.wm.getMostRecentWindow("navigator:browser");
-    let progressWindow: Window | undefined;
     if (win) {
-      progressWindow = win.openDialog(
+      this.progressWindow = win.openDialog(
         "chrome://tara/content/progress.html",
         "",
         "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=380",
         { header: header },
       );
     } else {
-      progressWindow = Services.ww.openWindow(
+      this.progressWindow = Services.ww.openWindow(
         null,
         "chrome://tara/content/progress.html",
         "",
@@ -144,26 +148,22 @@ export default class Progress {
     }
     // Reset progressWindow when progres window is closed.
     // For window click close in an element
-    (progressWindow as Window).onbeforeunload = (e) => {
-      progressWindow = undefined;
-      const queue = [];
+    this.progressWindow!.onbeforeunload = (e) => {
+      this.progressWindow = undefined;
+      this.queue = [];
     };
     // For close button in header bar
-    (progressWindow as Window).onclose = (e) => {
-      progressWindow = undefined;
-      const queue = [];
+    this.progressWindow!.onclose = (e) => {
+      this.progressWindow = undefined;
+      this.queue = [];
     };
     let t = 0;
     // Wait for window
-    while (
-      t < 500 &&
-      (progressWindow as Window).document.readyState !== "complete"
-    ) {
+    while (t < 500 && this.progressWindow!.document.readyState !== "complete") {
       await ztoolkit.getGlobal("Zotero").Promise.delay(10);
       t += 1;
       ztoolkit.log("** Tara wait ");
     }
-    this.progressWindow = progressWindow!;
   }
 
   updateProgressWindow(row: string, status: boolean, value: string = ""): void {

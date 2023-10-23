@@ -11,9 +11,7 @@ interface AddonInfo {
   version: string;
 }
 
-const zotero = ztoolkit.getGlobal("Zotero");
-
-export function getQueue() {
+export async function getQueue() {
   const qPrefs = [
     "keepAddon",
     "keepCSLs",
@@ -22,7 +20,7 @@ export function getQueue() {
     "keepPrefs",
   ];
 
-  const queue = ["unzip"];
+  const queue: Array<string> = [];
   qPrefs.forEach((i) => {
     if (getPref(i)) {
       queue.push(i);
@@ -34,20 +32,20 @@ export function getQueue() {
 export async function getFilteredPrefs() {
   const prefs = await readPrefsFromFile();
   const dropPrefs: Array<string> = [
-    "extensions.zotero.dataDir",
-    "extensions.zotero.firstRun.skipFirefoxProfileAccessCheck",
-    "extensions.zotero.firstRun2",
-    "extensions.zotero.lastWebDAVOrphanPurge",
-    "extensions.zotero.prefVersion",
-    "extensions.zotero.scaffold.translatorsDir",
-    "extensions.zotero.sync.reminder.setUp.enabled",
-    "extensions.zotero.sync.reminder.setUp.lastDisplayed",
-    "extensions.zotero.sync.storage.verified",
-    "extensions.zotero.recentSaveTargets",
-    "extensions.zotero.lastViewedFolder", // Last viewd collection
-    "extensions.zotero.scaffold.translatorsDir",
-    "extensions.zotero.scaffold.eslint.enabled",
-    "extensions.zotero.tara.itemID",
+    "extensions.Zotero.dataDir",
+    "extensions.Zotero.firstRun.skipFirefoxProfileAccessCheck",
+    "extensions.Zotero.firstRun2",
+    "extensions.Zotero.lastWebDAVOrphanPurge",
+    "extensions.Zotero.prefVersion",
+    "extensions.Zotero.scaffold.translatorsDir",
+    "extensions.Zotero.sync.reminder.setUp.enabled",
+    "extensions.Zotero.sync.reminder.setUp.lastDisplayed",
+    "extensions.Zotero.sync.storage.verified",
+    "extensions.Zotero.recentSaveTargets",
+    "extensions.Zotero.lastViewedFolder", // Last viewd collection
+    "extensions.Zotero.scaffold.translatorsDir",
+    "extensions.Zotero.scaffold.eslint.enabled",
+    "extensions.Zotero.tara.itemID",
   ];
   for (const p in prefs) {
     if (p in dropPrefs) {
@@ -58,35 +56,40 @@ export async function getFilteredPrefs() {
 }
 
 export async function createBackupItem() {
-  const s = new zotero.Search();
+  const itemID = Zotero.Prefs.get("tara.itemID");
+  if (itemID && Zotero.Items.get(itemID as number)) {
+    ztoolkit.log("备份条目已存在，不必创建新条目");
+    return;
+  }
+  const s = new Zotero.Search();
   s.addCondition("title", "is", "Tara_Backup");
   const itemIDs = await s.search();
   if (itemIDs.length) {
     // Use the first item returned.
-    zotero.Prefs.set("tara.itemID", itemIDs[0]);
+    Zotero.Prefs.set("tara.itemID", itemIDs[0]);
   } else {
     // Create Docuement Item for store backup zip file.
-    const item = new zotero.Item("document");
+    const item = new Zotero.Item("document");
     item.setField("title", "Tara_Backup");
     const itemID = (await item.saveTx()) as number;
-    zotero.Prefs.set("tara.itemID", itemID);
+    Zotero.Prefs.set("tara.itemID", itemID);
   }
 }
 
 export function getPrefsPath(): string {
-  const profileDir = zotero.Profile.dir;
+  const profileDir = Zotero.Profile.dir;
   return PathUtils.join(profileDir, "prefs.js");
 }
 
 export async function readPrefsFromFile() {
   const prefsFile: string = getPrefsPath();
-  return await zotero.Profile.readPrefsFromFile(prefsFile);
+  return await Zotero.Profile.readPrefsFromFile(prefsFile);
 }
 
 export async function getAddonInfos() {
   const wordPluginIDs = [
-    "zoteroOpenOfficeIntegration@zotero.org",
-    "zoteroWinWordIntegration@zotero.org",
+    "ZoteroOpenOfficeIntegration@Zotero.org",
+    "ZoteroWinWordIntegration@Zotero.org",
   ];
   const addoninfos: Array<AddonInfo> = [];
   for (const addon of await AddonManager.getAllAddons()) {
@@ -102,11 +105,11 @@ export async function getAddonInfos() {
 }
 
 export function getStyleInfos() {
-  return zotero.Styles.getAll();
+  return Zotero.Styles.getAll();
 }
 
 export async function getTranslatorInfos() {
-  const infos = await zotero.Translators.getAll();
+  const infos = await Zotero.Translators.getAll();
   const keepKeys = ["translatorID", "path", "fileName"];
   return infos.map(function (e: any) {
     return keepKeys.reduce((p: any, c) => {
@@ -137,14 +140,14 @@ export async function getBackupInfos() {
 }
 
 export async function createBackupFile(isExport = false) {
-  // await _Addon.views.openProgressWindow(
+  // await addon.data.progress.openProgressWindow(
   //   _Addon.locale.getString("backup.header"),
   // );
   // Create a temporary folder. Data in backup folder
-  const cacheTmp = zotero.getTempDirectory();
+  const cacheTmp = Zotero.getTempDirectory();
   const tmpDir = cacheTmp.path;
   const zipFilename = `${new Date().toLocaleString()}_backup.zip`.replace(
-    /[\s\/:]/g,
+    /[\s/:]/g,
     "_",
   );
   // Remove existing backup data.
@@ -159,65 +162,65 @@ export async function createBackupFile(isExport = false) {
   // Create backup item
   await createBackupItem();
   const outDir = PathUtils.join(tmpDir, "Backup");
-  await zotero.File.createDirectoryIfMissingAsync(outDir);
-  const profileDir: string = zotero.Profile.dir;
-  const dataDir: string = zotero.Prefs.get("dataDir") as string;
+  await Zotero.File.createDirectoryIfMissingAsync(outDir);
+  const profileDir: string = Zotero.Profile.dir;
+  const dataDir: string = Zotero.Prefs.get("dataDir") as string;
   let backupInfos;
   let s: string, t: string;
-  const totalTasks: number = addon.data.queue?.length || 0;
-  zotero.debug(`** Tara ${totalTasks}`);
+  const totalTasks: number = addon.data.progress.queue?.length || 0;
+  Zotero.debug(`** Tara ${totalTasks}`);
   while (totalTasks > 0) {
-    const task = addon.data.queue?.shift();
+    const task = addon.data.progress.queue?.shift();
     try {
       if (task == "preferences") {
-        zotero.debug("** Tara preferences");
+        Zotero.debug("** Tara preferences");
         backupInfos = await getBackupInfos();
         const backupInfosText = JSON.stringify(backupInfos);
         // Save preference
         const pf = PathUtils.join(outDir, "backup.json");
-        await zotero.File.putContentsAsync(
-          zotero.File.pathToFile(pf),
+        await Zotero.File.putContentsAsync(
+          Zotero.File.pathToFile(pf),
           backupInfosText,
         );
       } else if (task == "addons") {
-        zotero.debug("** Tara addons");
+        Zotero.debug("** Tara addons");
         s = PathUtils.join(profileDir, "extensions");
         t = PathUtils.join(outDir, "extensions");
-        await zotero.File.copyDirectory(s, t);
+        await Zotero.File.copyDirectory(s, t);
       } else if (task == "styles") {
-        zotero.debug("** Tara styles");
+        Zotero.debug("** Tara styles");
         s = PathUtils.join(dataDir, "styles");
         t = PathUtils.join(outDir, "styles");
-        await zotero.File.copyDirectory(s, t);
+        await Zotero.File.copyDirectory(s, t);
       } else if (task == "translators") {
-        zotero.debug("** Tara translators");
+        Zotero.debug("** Tara translators");
         s = PathUtils.join(dataDir, "translators");
         t = PathUtils.join(outDir, "translators");
-        await zotero.File.copyDirectory(s, t);
+        await Zotero.File.copyDirectory(s, t);
       } else if (task == "locate") {
-        zotero.debug("** Tara locate");
+        Zotero.debug("** Tara locate");
         s = PathUtils.join(dataDir, "locate");
         t = PathUtils.join(outDir, "locate");
-        await zotero.File.copyDirectory(s, t);
+        await Zotero.File.copyDirectory(s, t);
       } else if (task == "createZIP") {
-        zotero.debug("** Tara createZIP");
+        Zotero.debug("** Tara createZIP");
         const saveDir = (
-          isExport ? zotero.Prefs.get("tara.exportDir") : tmpDir
+          isExport ? Zotero.Prefs.get("tara.exportDir") : tmpDir
         ) as string;
-        await zotero.File.zipDirectory(
+        await Zotero.File.zipDirectory(
           outDir,
           PathUtils.join(saveDir, zipFilename),
           null,
         );
       } else if (task == "importAttachment") {
-        zotero.debug("** Tara importAttachment");
+        Zotero.debug("** Tara importAttachment");
         const zipfile = PathUtils.join(
-          zotero.Prefs.get("dataDir") as string,
+          Zotero.Prefs.get("dataDir") as string,
           "tmp",
           zipFilename,
         );
-        const item = zotero.Items.get(
-          zotero.Prefs.get("tara.itemID") as number,
+        const item = Zotero.Items.get(
+          Zotero.Prefs.get("tara.itemID") as number,
         );
         const timeString = new Date().toLocaleString();
         const importOptions = {
@@ -225,78 +228,74 @@ export async function createBackupFile(isExport = false) {
           title: timeString + "_backup.zip",
           parentItemID: item.id,
         };
-        await zotero.Attachments.importFromFile(importOptions);
+        await Zotero.Attachments.importFromFile(importOptions);
       } else if (task == "keepTaraXPI") {
-        zotero.debug("** Tara keepTaraXPI");
-        await zotero.File.copyToUnique(
+        Zotero.debug("** Tara keepTaraXPI");
+        await Zotero.File.copyToUnique(
           PathUtils.join(profileDir, "extensions", "tara@linxzh.com.xpi"),
           PathUtils.join(
-            zotero.Prefs.get("tara.exportDir") as string,
+            Zotero.Prefs.get("tara.exportDir") as string,
             "tara.xpi",
           ),
         );
       }
-      const pvalue = getProgress(addon.data.queue.length, totalTasks);
-      _Addon.views.updateProgressWindow(task, true, pvalue);
+      const pvalue = addon.data.progress.getProgress(
+        addon.data.progress.queue.length,
+        totalTasks,
+      );
+      addon.data.progress.updateProgressWindow(task, true, pvalue);
     } catch (e) {
-      _Addon.views.updateProgressWindow(task, false);
+      addon.data.progress.updateProgressWindow(task, false);
     }
   }
-  _Addon.views.completeProgressWindow(isExport);
-  zotero.debug("Create backup zip complete");
+  addon.data.progress.completeProgressWindow(isExport);
+  Zotero.debug("Create backup zip complete");
 }
 
 export async function createBackupAsAttachment() {
   ztoolkit.log("**create Backup As Attachment");
 
   // Backup parts in a queue
-  let queue: any = {
-    preferences: zotero.Prefs.get("tara.keepPrefs"),
-    addons: zotero.Prefs.get("tara.keepAddon"),
-    styles: zotero.Prefs.get("tara.keepCSLs"),
-    translators: zotero.Prefs.get("tara.keepTranslators"),
-    createZIP: true,
-    importAttachment: true,
-  };
-  queue = Object.keys(queue).filter((k) => queue[k]);
+  const queue = ["createZIP", "importAttachment"];
+
   await createBackupFile();
   ztoolkit.log("** Tara Tara finish create Backup As Attachment");
 }
 
 export async function exportBackup() {
-  zotero.debug("** Tara Tara start export backup");
+  Zotero.debug("** Tara Tara start export backup");
   let queue: any = {
-    preferences: zotero.Prefs.get("tara.keepPrefs"),
-    addons: zotero.Prefs.get("tara.keepAddon"),
-    styles: zotero.Prefs.get("tara.keepCSLs"),
-    translators: zotero.Prefs.get("tara.keepTranslators"),
+    preferences: Zotero.Prefs.get("tara.keepPrefs"),
+    addons: Zotero.Prefs.get("tara.keepAddon"),
+    styles: Zotero.Prefs.get("tara.keepCSLs"),
+    translators: Zotero.Prefs.get("tara.keepTranslators"),
     createZIP: true,
     keepTaraXPI: true,
   };
   queue = Object.keys(queue).filter((k) => queue[k]);
   await createBackupFile(true);
-  zotero.debug("** Tara Tara finish export backup");
+  Zotero.debug("** Tara Tara finish export backup");
 }
 
 export async function unzipToTemporaryDir(filename: string, tmpDir: string) {
-  zotero.debug(tmpDir);
-  await zotero.File.createDirectoryIfMissingAsync(tmpDir);
-  const zipFile = zotero.File.pathToFile(filename);
+  Zotero.debug(tmpDir);
+  await Zotero.File.createDirectoryIfMissingAsync(tmpDir);
+  const zipFile = Zotero.File.pathToFile(filename);
   const zipReader = Components.classes[
     "@mozilla.org/libjar/zip-reader;1"
   ].createInstance(Components.interfaces.nsIZipReader);
   zipReader.open(zipFile);
 
-  await zotero.File.createDirectoryIfMissingAsync(
+  await Zotero.File.createDirectoryIfMissingAsync(
     PathUtils.join(tmpDir, "translators"),
   );
-  await zotero.File.createDirectoryIfMissingAsync(
+  await Zotero.File.createDirectoryIfMissingAsync(
     PathUtils.join(tmpDir, "extensions"),
   );
-  await zotero.File.createDirectoryIfMissingAsync(
+  await Zotero.File.createDirectoryIfMissingAsync(
     PathUtils.join(tmpDir, "styles"),
   );
-  await zotero.File.createDirectoryIfMissingAsync(
+  await Zotero.File.createDirectoryIfMissingAsync(
     PathUtils.join(tmpDir, "locate"),
   );
 
@@ -308,59 +307,59 @@ export async function unzipToTemporaryDir(filename: string, tmpDir: string) {
       continue;
     }
     const destPath = PathUtils.join(tmpDir, ...entry.split(/\//));
-    zipReader.extract(entry, zotero.File.pathToFile(destPath));
+    zipReader.extract(entry, Zotero.File.pathToFile(destPath));
   }
   zipReader.close();
 }
 
 export async function importFromBackup() {
   // Import from an export backup zip
-  if (!zotero.Prefs.get("tara.itemID")) {
+  if (!Zotero.Prefs.get("tara.itemID")) {
     await createBackupItem();
   }
-  const backupItemID = zotero.Prefs.get("tara.itemID") as number;
-  const zoteroPane = zotero.getActiveZoteroPane();
-  await zoteroPane.addAttachmentFromDialog(false, backupItemID);
-  const attachmentID = zotero.Items.get(backupItemID).getAttachments()[0];
-  const attachment = zotero.Items.get(attachmentID);
+  const backupItemID = Zotero.Prefs.get("tara.itemID") as number;
+  const ZoteroPane = Zotero.getActiveZoteroPane();
+  await ZoteroPane.addAttachmentFromDialog(false, backupItemID);
+  const attachmentID = Zotero.Items.get(backupItemID).getAttachments()[0];
+  const attachment = Zotero.Items.get(attachmentID);
   await restoreFromFile(attachment);
 }
 
 export async function restoreFromBackup() {
-  const backupItemID = zotero.Prefs.get("tara.itemID") as number;
+  const backupItemID = Zotero.Prefs.get("tara.itemID") as number;
   const io: any = {
     title: getString("select.title"),
-    deferred: zotero.Promise.defer(),
+    deferred: Zotero.Promise.defer(),
   };
   let attachment;
   if (
     backupItemID &&
-    zotero.Items.get(backupItemID) &&
-    zotero.Items.get(backupItemID).getAttachments()
+    Zotero.Items.get(backupItemID) &&
+    Zotero.Items.get(backupItemID).getAttachments()
   ) {
-    const backupItem = zotero.Items.get(backupItemID);
+    const backupItem = Zotero.Items.get(backupItemID);
     const attachmentIDs = backupItem.getAttachments();
-    const files = {};
+    const files: any = {};
     attachmentIDs.reduce((p: any, r) => {
-      p[zotero.Items.get(r).getField("title") as string] = r;
+      p[Zotero.Items.get(r).getField("title") as string] = r;
       return p;
     }, files);
     io["items"] = Object.keys(files);
     io["items"].sort().reverse();
-    zotero.debug(io["items"]);
-    _Addon.views.openSelectWindow(io);
+    Zotero.debug(io["items"]);
+    addon.data.progress.openSelectWindow(io);
     await io.deferred.promise;
-    zotero.debug("** Tara Tara select promise");
-    zotero.debug(io["attachment"]);
+    Zotero.debug("** Tara Tara select promise");
+    Zotero.debug(io["attachment"]);
     // No item selected
     if (!io["attachment"]) return;
-    attachment = zotero.Items.get(files[io["attachment"]] as number);
+    attachment = Zotero.Items.get(files[io["attachment"]] as number);
   }
-  await restoreFromFile(attachment);
+  await restoreFromFile(attachment!);
 }
 
 export async function restoreFromFile(attachment: Zotero.Item) {
-  const cacheTmp = zotero.getTempDirectory();
+  const cacheTmp = Zotero.getTempDirectory();
   cacheTmp.append("Backup");
   if (cacheTmp.exists()) {
     cacheTmp.remove(true);
@@ -368,21 +367,19 @@ export async function restoreFromFile(attachment: Zotero.Item) {
   const tmpDir = cacheTmp.path;
   const queue: any = {
     unzip: true,
-    addons: zotero.Prefs.get("tara.keepAddon"),
-    styles: zotero.Prefs.get("tara.keepCSLs"),
-    translators: zotero.Prefs.get("tara.keepTranslators"),
-    locate: zotero.Prefs.get("tara.keepLocate"),
-    preferences: zotero.Prefs.get("tara.keepPrefs"),
+    addons: Zotero.Prefs.get("tara.keepAddon"),
+    styles: Zotero.Prefs.get("tara.keepCSLs"),
+    translators: Zotero.Prefs.get("tara.keepTranslators"),
+    locate: Zotero.Prefs.get("tara.keepLocate"),
+    preferences: Zotero.Prefs.get("tara.keepPrefs"),
   };
-  _Addon.views.queue = Object.keys(queue).filter((k) => queue[k]);
-  const totalTasks = _Addon.views.queue;
-  const dataDir = zotero.Prefs.get("dataDir") as string;
-  const profileDir: string = zotero.Profile.dir;
-  await _Addon.views.openProgressWindow(
-    _Addon.locale.getString("restore.header"),
-  );
-  while (_Addon.views.queue.length > 0) {
-    const task = _Addon.views.queue.shift();
+  addon.data.progress.queue = Object.keys(queue).filter((k) => queue[k]);
+  const totalTasks = addon.data.progress.queue;
+  const dataDir = Zotero.Prefs.get("dataDir") as string;
+  const profileDir: string = Zotero.Profile.dir;
+  await addon.data.progress.openProgressWindow(getString("restore.header"));
+  while (addon.data.progress.queue.length > 0) {
+    const task = addon.data.progress.queue.shift();
     let s: any, t: any;
     try {
       if (task == "unzip") {
@@ -390,7 +387,7 @@ export async function restoreFromFile(attachment: Zotero.Item) {
       } else if (task == "addons") {
         const backupPrefsPath = PathUtils.join(tmpDir, "backup.json");
         const backupPrefs = JSON.parse(
-          (await zotero.File.getContentsAsync(backupPrefsPath)) as string,
+          (await Zotero.File.getContentsAsync(backupPrefsPath)) as string,
         );
         for (const addon of backupPrefs.addons) {
           ztoolkit.log(`** Tara Tara install addon ${addon.path}`);
@@ -398,9 +395,9 @@ export async function restoreFromFile(attachment: Zotero.Item) {
             const xpi = PathUtils.join(
               tmpDir,
               "extensions",
-              PathUtils.basename(addon.path),
+              PathUtils.filename(addon.path),
             );
-            const xpiFile = zotero.File.pathToFile(xpi);
+            const xpiFile = Zotero.File.pathToFile(xpi);
             // If addon is installed, set userDisabled
             AddonManager.getAddonByID(addon.id, function (a: any) {
               if (a) {
@@ -418,41 +415,41 @@ export async function restoreFromFile(attachment: Zotero.Item) {
               const t = PathUtils.join(profileDir, "extensions", addon.id);
               const tExists = await IOUtils.exists(t);
               if (!tExists) {
-                await zotero.File.copyToUnique(s, t);
+                await Zotero.File.copyToUnique(s, t);
               }
             } else {
-              zotero.debug(`** Tara Tara missing addon ${addon.path}`);
+              Zotero.debug(`** Tara Tara missing addon ${addon.path}`);
             }
           }
         }
       } else if (task == "styles") {
         s = PathUtils.join(tmpDir, "styles");
         t = PathUtils.join(dataDir, "styles");
-        await zotero.File.copyDirectory(s, t);
+        await Zotero.File.copyDirectory(s, t);
       } else if (task == "translators") {
         s = PathUtils.join(tmpDir, "translators");
         t = PathUtils.join(dataDir, "translators");
-        await zotero.File.copyDirectory(s, t);
+        await Zotero.File.copyDirectory(s, t);
       } else if (task == "locate") {
         s = PathUtils.join(tmpDir, "locate");
         t = PathUtils.join(dataDir, "locate");
-        await zotero.File.iterateDirectory(s, async function (entry: any) {
+        await Zotero.File.iterateDirectory(s, async function (entry: any) {
           if (entry.name === "engines.json") {
-            const contentsBackup = (await zotero.File.getContentsAsync(
+            const contentsBackup = (await Zotero.File.getContentsAsync(
               PathUtils.join(s, entry.name),
             )) as string;
             const enginesBackup = JSON.parse(contentsBackup);
-            const contents = (await zotero.File.getContentsAsync(
+            const contents = (await Zotero.File.getContentsAsync(
               PathUtils.join(t, entry.name),
             )) as string;
             const engines = JSON.parse(contents);
             const allContents = enginesBackup.concat(engines);
-            await zotero.File.putContentsAsync(
-              zotero.File.pathToFile(PathUtils.join(t, entry.name)),
+            await Zotero.File.putContentsAsync(
+              Zotero.File.pathToFile(PathUtils.join(t, entry.name)),
               allContents,
             );
           } else {
-            await zotero.File.copyToUnique(
+            await Zotero.File.copyToUnique(
               PathUtils.join(s, entry.name),
               PathUtils.join(t, entry.name),
             );
@@ -461,7 +458,7 @@ export async function restoreFromFile(attachment: Zotero.Item) {
       } else if (task == "preferences") {
         const backupPrefsPath = PathUtils.join(tmpDir, "backup.json");
         const backupPrefs = JSON.parse(
-          (await zotero.File.getContentsAsync(backupPrefsPath)) as string,
+          (await Zotero.File.getContentsAsync(backupPrefsPath)) as string,
         );
         for (let pkey in backupPrefs.preferences) {
           pkey = pkey.replace(/^extensions\./, "");
@@ -471,15 +468,18 @@ export async function restoreFromFile(attachment: Zotero.Item) {
             );
             if (!isExists) continue;
           }
-          zotero.Prefs.set(pkey, backupPrefs.preferences[pkey]);
+          Zotero.Prefs.set(pkey, backupPrefs.preferences[pkey]);
         }
       }
-      const pvalue = getProgress(_Addon.views.queue.length, totalTasks);
-      _Addon.views.updateProgressWindow(task, true, pvalue);
+      const pvalue = addon.data.progress.getProgress(
+        addon.data.progress.queue.length,
+        totalTasks,
+      );
+      addon.data.progress.updateProgressWindow(task, true, pvalue);
     } catch (e) {
-      zotero.debug(e);
-      _Addon.views.updateProgressWindow(task, false);
+      Zotero.debug(e);
+      addon.data.progress.updateProgressWindow(task, false);
     }
   }
-  _Addon.views.completeProgressWindow(false, "restore.complete.msg");
+  addon.data.progress.completeProgressWindow(false, "restore.complete.msg");
 }

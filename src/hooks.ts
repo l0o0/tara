@@ -1,7 +1,6 @@
 import {
   BasicExampleFactory,
   HelperExampleFactory,
-  KeyExampleFactory,
   PromptExampleFactory,
   UIExampleFactory,
 } from "./modules/examples";
@@ -46,12 +45,10 @@ async function onMainWindowLoad(win: Window): Promise<void> {
 
 async function onMainWindowUnload(win: Window): Promise<void> {
   ztoolkit.unregisterAll();
-  addon.data.dialog?.window?.close();
 }
 
 function onShutdown(): void {
   ztoolkit.unregisterAll();
-  addon.data.dialog?.window?.close();
   // Remove addon object
   addon.data.alive = false;
   delete Zotero[config.addonInstance];
@@ -96,21 +93,21 @@ async function onPrefsEvent(type: string, data: { [key: string]: any }) {
   }
 }
 
-function onShortcuts(type: string) {
-  switch (type) {
-    case "larger":
-      KeyExampleFactory.exampleShortcutLargerCallback();
-      break;
-    case "smaller":
-      KeyExampleFactory.exampleShortcutSmallerCallback();
-      break;
-    case "confliction":
-      KeyExampleFactory.exampleShortcutConflictingCallback();
-      break;
-    default:
-      break;
-  }
-}
+// function onShortcuts(type: string) {
+//   switch (type) {
+//     case "larger":
+//       KeyExampleFactory.exampleShortcutLargerCallback();
+//       break;
+//     case "smaller":
+//       KeyExampleFactory.exampleShortcutSmallerCallback();
+//       break;
+//     case "confliction":
+//       KeyExampleFactory.exampleShortcutConflictingCallback();
+//       break;
+//     default:
+//       break;
+//   }
+// }
 
 function onDialogEvents(type: string) {
   switch (type) {
@@ -145,6 +142,5 @@ export default {
   onMainWindowUnload,
   onNotify,
   onPrefsEvent,
-  onShortcuts,
   onDialogEvents,
 };

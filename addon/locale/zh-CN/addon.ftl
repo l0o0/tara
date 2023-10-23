@@ -25,4 +25,5 @@ locate = locate
 preferences = Zotero及插件配置
 restore-complete-msg = 完成，建议重启 Zotero
 select-title = 选择一个备份文件
-tara-choose-exportDir = 选择备份目录
+choose-exportDir = 选择备份目录
+menuitem = 蒲公英
