@@ -112,13 +112,12 @@ export class UI {
 
 export default class Progress {
   public queue?: Array<string> = [];
-  public totalTasksNum: number;
+  public totalTasks?: number;
   public progressWindow?: Window;
   private tickIcon: string;
   private crossIcon: string;
 
   constructor() {
-    this.totalTasksNum = 0;
     this.tickIcon = "chrome://zotero/skin/tick.png";
     this.crossIcon = "chrome://zotero/skin/cross.png";
   }
@@ -166,7 +165,7 @@ export default class Progress {
     }
   }
 
-  updateProgressWindow(row: string, status: boolean, value: string = ""): void {
+  updateProgressWindow(row: string, status: boolean): void {
     if (!this.progressWindow) return;
     const doc = this.progressWindow.document;
     const ele = doc.createElement("li");
@@ -174,13 +173,29 @@ export default class Progress {
     let innerHTML: string;
     if (status) {
       innerHTML = `<img src="${this.tickIcon}"> ${getString(row)}`;
+      const value = `${this.queue!.length / this.totalTasks!}`;
+      doc.querySelector("#progress")!.setAttribute("value", value);
     } else {
       innerHTML = `<img src="${this.crossIcon}"> ${getString(row)}`;
     }
     ele.innerHTML = innerHTML;
     doc.querySelector("#listbox")!.appendChild(ele);
-    if (value != "") {
-      doc.querySelector("#progress")!.setAttribute("value", value);
+  }
+
+  completeProgressWindow(isExport: boolean, msg: string = "") {
+    if (!this.progressWindow) return;
+    const doc = this.progressWindow.document;
+    doc.querySelector("#progress")!.setAttribute("value", "100");
+    doc.querySelector("#button1")!.textContent = "OK";
+    if (isExport) {
+      doc.querySelector("#msg")!.textContent = PathUtils.join(
+        Zotero.Prefs.get("dataDir") as string,
+        "Backup",
+      );
+    } else {
+      doc.querySelector("#msg")!.textContent = getString(
+        msg ? msg : "complete-msg",
+      );
     }
   }
 }
