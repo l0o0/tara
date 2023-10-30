@@ -1,5 +1,5 @@
 caption-label = 备份设置
-keepAddon-label = 
+keepAddons-label = 
   .label = 备份已安装插件
 keepPrefs-label = 
   .label = 备份Zotero配置及插件配置

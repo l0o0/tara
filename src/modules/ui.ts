@@ -1,7 +1,12 @@
 import { config } from "../../package.json";
 import { getString } from "../utils/locale";
 import { getPref } from "../utils/prefs";
-import { createBackupAsAttachment } from "./backup";
+import {
+  createBackupAsAttachment,
+  exportBackup,
+  importFromBackup,
+  restoreFromBackup,
+} from "./backup";
 
 export class UI {
   static registerToolsMenu() {
@@ -20,7 +25,6 @@ export class UI {
           label: getString("toolbar-create"),
           icon: `${iconbase}/create_icon.png`,
           commandListener: () => {
-            ztoolkit.log("**************createBackupAsAttachment");
             createBackupAsAttachment();
           },
         },
@@ -28,19 +32,19 @@ export class UI {
           tag: "menuitem",
           label: getString("toolbar-export"),
           icon: `${iconbase}/export_icon.png`,
-          oncommand: "alert('export');",
+          commandListener: () => exportBackup(),
         },
         {
           tag: "menuitem",
           label: getString("toolbar-import"),
           icon: `${iconbase}/import_icon.png`,
-          oncommand: "alert('import');",
+          commandListener: () => importFromBackup(),
         },
         {
           tag: "menuitem",
           label: getString("toolbar-restore"),
           icon: `${iconbase}/restore_icon.png`,
-          oncommand: "alert('restore');",
+          commandListener: () => restoreFromBackup(),
         },
       ],
     });
@@ -114,6 +118,7 @@ export default class Progress {
   public queue?: Array<string> = [];
   public totalTasks?: number;
   public progressWindow?: Window;
+  public selectionWindow?: Window;
   private tickIcon: string;
   private crossIcon: string;
 
@@ -126,25 +131,23 @@ export default class Progress {
     return ((1 - progress / total) * 100).toString();
   }
 
-  async openProgressWindow(header = null) {
-    ztoolkit.log("open progress window");
+  async openWindow(html: string, chromeargs: string, io: any) {
+    ztoolkit.log("open window ${io.header}");
     const win = Services.wm.getMostRecentWindow("navigator:browser");
+
     if (win) {
-      this.progressWindow = win.openDialog(
-        "chrome://tara/content/progress.html",
-        "",
-        "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=380",
-        { header: header },
-      );
+      return win.openDialog(html, "", chromeargs, io);
     } else {
-      this.progressWindow = Services.ww.openWindow(
-        null,
-        "chrome://tara/content/progress.html",
-        "",
-        "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=380",
-        { header: header },
-      );
+      return Services.ww.openWindow(html, "", chromeargs, io);
     }
+  }
+
+  async openProgressWindow(io: any) {
+    this.progressWindow = await this.openWindow(
+      "chrome://tara/content/progress.html",
+      "chrome,close=yes,resizable=no,dependent,dialog,centerscreen,height=290,width=380",
+      io,
+    );
     // Reset progressWindow when progres window is closed.
     // For window click close in an element
     this.progressWindow!.onbeforeunload = (e) => {
@@ -173,7 +176,10 @@ export default class Progress {
     let innerHTML: string;
     if (status) {
       innerHTML = `<img src="${this.tickIcon}"> ${getString(row)}`;
-      const value = `${this.queue!.length / this.totalTasks!}`;
+      const value = `${(1 - this.queue!.length / this.totalTasks!) * 100}`;
+      ztoolkit.log(
+        `Progress ${value}, ${this.queue!.length} / ${this.totalTasks!}`,
+      );
       doc.querySelector("#progress")!.setAttribute("value", value);
     } else {
       innerHTML = `<img src="${this.crossIcon}"> ${getString(row)}`;
@@ -188,14 +194,20 @@ export default class Progress {
     doc.querySelector("#progress")!.setAttribute("value", "100");
     doc.querySelector("#button1")!.textContent = "OK";
     if (isExport) {
-      doc.querySelector("#msg")!.textContent = PathUtils.join(
-        Zotero.Prefs.get("dataDir") as string,
-        "Backup",
-      );
+      doc.querySelector("#msg")!.textContent = msg;
     } else {
-      doc.querySelector("#msg")!.textContent = getString(
-        msg ? msg : "complete-msg",
-      );
+      doc.querySelector("#msg")!.textContent = msg
+        ? msg
+        : getString("complete-msg");
     }
+  }
+
+  async openSelectWindow(io: any) {
+    ztoolkit.log("** Tara open select window ");
+    this.selectionWindow = await this.openWindow(
+      "chrome://tara/content/select.html",
+      "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=300,width=410",
+      io,
+    );
   }
 }
