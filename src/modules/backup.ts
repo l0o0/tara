@@ -126,6 +126,7 @@ export async function getBackupInfos() {
   const tInfos = await getTranslatorInfos();
   return {
     createTime: new Date().toISOString(),
+    ZoteroVersion: Zotero.version,
     meta: {
       prefNum: Object.keys(prefsInfos).length,
       addonNum: addonInfos.length,
@@ -378,7 +379,7 @@ export async function restoreFromFile(attachment: Zotero.Item) {
   const dataDir = Zotero.Prefs.get("dataDir") as string;
   const profileDir: string = Zotero.Profile.dir;
   await addon.data.progress.openProgressWindow({
-    header: getString("restore.header"),
+    header: getString("restore-header"),
   });
   while (addon.data.progress.queue.length > 0) {
     const task = addon.data.progress.queue.shift();
@@ -481,6 +482,6 @@ export async function restoreFromFile(attachment: Zotero.Item) {
   }
   addon.data.progress.completeProgressWindow(
     false,
-    getString("restore.complete.msg"),
+    getString("restore-complete-msg"),
   );
 }

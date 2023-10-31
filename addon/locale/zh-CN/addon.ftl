@@ -18,6 +18,7 @@ importAttachment = 保存备份文件
 keepTaraXPI = 备份Tara安装包
 export-msg = 目录：{ $folder }，备份文件：{ $zipfile }
 complete-msg = 备份文件已保存于Tara_Backup条目附件中
+finish = 完成
 unzip = 解压备份文件
 keepLocate = locate
 keepPrefs = Zotero及插件配置

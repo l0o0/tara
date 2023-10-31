@@ -196,6 +196,7 @@ export default class Progress {
     if (isExport) {
       doc.querySelector("#msg")!.textContent = msg;
     } else {
+      doc.querySelector('id="status')!.textContent = getString("finish");
       doc.querySelector("#msg")!.textContent = msg
         ? msg
         : getString("complete-msg");
