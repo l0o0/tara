@@ -1,3 +1,4 @@
+import { FilePickerHelper } from "zotero-plugin-toolkit/dist/helpers/filePicker";
 import { getString } from "../utils/locale";
 import { getPref } from "../utils/prefs";
 
@@ -323,15 +324,15 @@ export async function unzipToTemporaryDir(filename: string, tmpDir: string) {
 
 export async function importFromBackup() {
   // Import from an export backup zip
-  if (!getPref("itemID")) {
-    await createBackupItem();
-  }
-  const backupItemID = getPref("itemID") as number;
-  const ZoteroPane = Zotero.getActiveZoteroPane();
-  await ZoteroPane.addAttachmentFromDialog(false, backupItemID);
-  const attachmentID = Zotero.Items.get(backupItemID).getAttachments()[0];
-  const attachment = Zotero.Items.get(attachmentID);
-  await restoreFromFile(attachment);
+  const filename = await new FilePickerHelper(
+    `${Zotero.getString("select-backup-file")}`,
+    "open",
+    [["Zip File(*.zip)", "*.zip"]],
+  ).open();
+
+  if (!filename) return;
+
+  await restoreFromFile(filename);
 }
 
 export async function restoreFromBackup() {
@@ -364,10 +365,10 @@ export async function restoreFromBackup() {
     if (!io["attachment"]) return;
     attachment = Zotero.Items.get(files[io["attachment"]] as number);
   }
-  await restoreFromFile(attachment!);
+  await restoreFromFile(attachment!.getFilePath() as string);
 }
 
-export async function restoreFromFile(attachment: Zotero.Item) {
+export async function restoreFromFile(filename: string) {
   const cacheTmp = Zotero.getTempDirectory();
   cacheTmp.append("Backup");
   if (cacheTmp.exists()) {
@@ -386,7 +387,7 @@ export async function restoreFromFile(attachment: Zotero.Item) {
     let s: any, t: any;
     try {
       if (task == "unzip") {
-        await unzipToTemporaryDir(attachment.getFilePath() as string, tmpDir);
+        await unzipToTemporaryDir(filename, tmpDir);
       } else if (task == "addons") {
         const backupPrefsPath = PathUtils.join(tmpDir, "backup.json");
         const backupPrefs = JSON.parse(

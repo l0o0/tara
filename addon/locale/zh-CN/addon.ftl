@@ -10,6 +10,7 @@ progress-cancel = Cancel
 backup-header = 正在进行备份
 export-header = 正在导出备份
 restore-header = 正在进行恢复
+select-backup-file = 选择一个备份文件
 keepAddons = 插件
 keepCSLs = CSL 格式文件
 keepTranslators = 转换器(translators)文件
