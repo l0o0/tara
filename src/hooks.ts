@@ -1,9 +1,4 @@
-import {
-  BasicExampleFactory,
-  HelperExampleFactory,
-  PromptExampleFactory,
-  UIExampleFactory,
-} from "./modules/examples";
+import { BasicExampleFactory } from "./modules/examples";
 import { UI } from "./modules/ui";
 import { config } from "../package.json";
 import { initLocale } from "./utils/locale";
@@ -20,8 +15,6 @@ async function onStartup() {
 
   BasicExampleFactory.registerPrefs();
 
-  BasicExampleFactory.registerNotifier();
-
   await onMainWindowLoad(window);
 }
 
@@ -33,12 +26,6 @@ async function onMainWindowLoad(win: Window): Promise<void> {
 
   //UI.registerToolbarMenu();
   UI.registerToolsMenu();
-
-  PromptExampleFactory.registerNormalCommandExample();
-
-  PromptExampleFactory.registerAnonymousCommandExample();
-
-  PromptExampleFactory.registerConditionalCommandExample();
 
   await Zotero.Promise.delay(1000);
 }
@@ -58,24 +45,6 @@ function onShutdown(): void {
  * This function is just an example of dispatcher for Notify events.
  * Any operations should be placed in a function to keep this funcion clear.
  */
-async function onNotify(
-  event: string,
-  type: string,
-  ids: Array<string | number>,
-  extraData: { [key: string]: any },
-) {
-  // You can add your code to the corresponding notify type
-  ztoolkit.log("notify", event, type, ids, extraData);
-  if (
-    event == "select" &&
-    type == "tab" &&
-    extraData[ids[0]].type == "reader"
-  ) {
-    BasicExampleFactory.exampleNotifierCallback();
-  } else {
-    return;
-  }
-}
 
 /**
  * This function is just an example of dispatcher for Preference UI events.
@@ -93,54 +62,10 @@ async function onPrefsEvent(type: string, data: { [key: string]: any }) {
   }
 }
 
-// function onShortcuts(type: string) {
-//   switch (type) {
-//     case "larger":
-//       KeyExampleFactory.exampleShortcutLargerCallback();
-//       break;
-//     case "smaller":
-//       KeyExampleFactory.exampleShortcutSmallerCallback();
-//       break;
-//     case "confliction":
-//       KeyExampleFactory.exampleShortcutConflictingCallback();
-//       break;
-//     default:
-//       break;
-//   }
-// }
-
-function onDialogEvents(type: string) {
-  switch (type) {
-    case "dialogExample":
-      HelperExampleFactory.dialogExample();
-      break;
-    case "clipboardExample":
-      HelperExampleFactory.clipboardExample();
-      break;
-    case "filePickerExample":
-      HelperExampleFactory.filePickerExample();
-      break;
-    case "progressWindowExample":
-      HelperExampleFactory.progressWindowExample();
-      break;
-    case "vtableExample":
-      HelperExampleFactory.vtableExample();
-      break;
-    default:
-      break;
-  }
-}
-
-// Add your hooks here. For element click, etc.
-// Keep in mind hooks only do dispatch. Don't add code that does real jobs in hooks.
-// Otherwise the code would be hard to read and maintian.
-
 export default {
   onStartup,
   onShutdown,
   onMainWindowLoad,
   onMainWindowUnload,
-  onNotify,
   onPrefsEvent,
-  onDialogEvents,
 };
