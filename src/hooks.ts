@@ -2,7 +2,7 @@ import { BasicExampleFactory } from "./modules/examples";
 import { UI } from "./modules/ui";
 import { config } from "../package.json";
 import { initLocale } from "./utils/locale";
-import { registerPrefsScripts } from "./modules/preferenceScript";
+import { registerPrefsScripts, initPrefs } from "./modules/preferenceScript";
 import { createZToolkit } from "./utils/ztoolkit";
 
 async function onStartup() {
@@ -12,6 +12,7 @@ async function onStartup() {
     Zotero.uiReadyPromise,
   ]);
   initLocale();
+  initPrefs();
 
   BasicExampleFactory.registerPrefs();
 

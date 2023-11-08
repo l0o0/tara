@@ -1,6 +1,11 @@
 import { FilePickerHelper } from "zotero-plugin-toolkit/dist/helpers/filePicker";
 import { config } from "../../package.json";
-import { setPref } from "../utils/prefs";
+import { setPref, getPref } from "../utils/prefs";
+
+// Init complex preference value
+export function initPrefs() {
+  if (!getPref("exportDir")) setPref("exportDir", PathUtils.join(Zotero.Prefs.get("dataDir") as string, "Tara"));
+}
 
 export async function registerPrefsScripts(_window: Window) {
   // This function is called when the prefs window is opened
@@ -40,8 +45,5 @@ function bindPrefEvents() {
       if (f) {
         setPref("exportDir", f);
       }
-      addon.data.prefs!.window.alert(
-        `Successfully changed to ${(e.target as HTMLInputElement).value}!`,
-      );
     });
 }
