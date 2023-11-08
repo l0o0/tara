@@ -33,25 +33,27 @@ export function getQueue() {
 export async function getFilteredPrefs() {
   const prefs = await readPrefsFromFile();
   const dropPrefs: Array<string> = [
-    "extensions.Zotero.dataDir",
-    "extensions.Zotero.firstRun.skipFirefoxProfileAccessCheck",
-    "extensions.Zotero.firstRun2",
-    "extensions.Zotero.lastWebDAVOrphanPurge",
-    "extensions.Zotero.prefVersion",
-    "extensions.Zotero.scaffold.translatorsDir",
-    "extensions.Zotero.sync.reminder.setUp.enabled",
-    "extensions.Zotero.sync.reminder.setUp.lastDisplayed",
-    "extensions.Zotero.sync.storage.verified",
-    "extensions.Zotero.recentSaveTargets",
-    "extensions.Zotero.lastViewedFolder", // Last viewd collection
-    "extensions.Zotero.scaffold.translatorsDir",
-    "extensions.Zotero.scaffold.eslint.enabled",
-    "extensions.Zotero.tara.itemID",
+    "extensions.zotero.dataDir",
+    "extensions.zotero.firstRun.skipFirefoxProfileAccessCheck",
+    "extensions.zotero.firstRun2",
+    "extensions.zotero.lastWebDAVOrphanPurge",
+    "extensions.zotero.prefVersion",
+    "extensions.zotero.scaffold.translatorsDir",
+    "extensions.zotero.sync.reminder.setUp.enabled",
+    "extensions.zotero.sync.reminder.setUp.lastDisplayed",
+    "extensions.zotero.sync.storage.verified",
+    "extensions.zotero.recentSaveTargets",
+    "extensions.zotero.lastViewedFolder", // Last viewd collection
+    "extensions.zotero.scaffold.translatorsDir",
+    "extensions.zotero.scaffold.eslint.enabled",
+    "extensions.zotero.tara.itemID",
+    "extensions.zotero.thirdPartyCache",
+    "extensions.zotero.zotero.asyncTemp",
+    "extensions.zoteroWinWordIntegration.installed",
+    "extensions.zoteroWinWordIntegration.version"
   ];
   for (const p in prefs) {
-    if (p in dropPrefs) {
-      prefs.delete(p);
-    }
+    if (dropPrefs.includes(p)) delete prefs[p];
   }
   return prefs;
 }
@@ -170,6 +172,7 @@ export async function createBackupFile(isExport = false) {
   const dataDir: string = Zotero.Prefs.get("dataDir") as string;
   let backupInfos;
   let s: string, t: string;
+  let success = true;
   await addon.data.progress.openProgressWindow({
     header: isExport ? getString("export-header") : getString("backup-header"),
   });
@@ -250,6 +253,8 @@ export async function createBackupFile(isExport = false) {
       }
       addon.data.progress.updateProgressWindow(task, true);
     } catch (e) {
+      ztoolkit.log(e);
+      success = false;
       addon.data.progress.updateProgressWindow(task, false);
       addon.data.progress.queue = [];
     }
@@ -258,8 +263,8 @@ export async function createBackupFile(isExport = false) {
     isExport,
     isExport
       ? getString("export-msg", {
-          args: { folder: getPref("exportDir"), zipfile: zipFilename },
-        })
+        args: { folder: getPref("exportDir"), zipfile: zipFilename },
+      })
       : getString("complete-msg"),
   );
   ztoolkit.log("Create backup zip complete");
@@ -345,7 +350,7 @@ export async function restoreFromBackup() {
     title: getString("select-title"),
     deferred: Zotero.Promise.defer(),
   };
-  let attachment;
+  let attachment: any;
   if (
     backupItemID &&
     Zotero.Items.get(backupItemID) &&
@@ -444,6 +449,7 @@ export async function restoreFromFile(filename: string) {
         case "keepTranslators":
           s = PathUtils.join(tmpDir, "translators");
           t = PathUtils.join(dataDir, "translators");
+          ztoolkit.log(`restore locate, ${s}, ${t}`);
           await Zotero.File.copyDirectory(s, t);
           break;
         case "keepLocate":

@@ -132,7 +132,7 @@ export default class Progress {
   }
 
   async openWindow(html: string, chromeargs: string, io: any) {
-    ztoolkit.log("open window ${io.header}");
+    ztoolkit.log(`open window ${io.header}`);
     const win = Services.wm.getMostRecentWindow("navigator:browser");
 
     if (win) {
@@ -188,6 +188,7 @@ export default class Progress {
     doc.querySelector("#listbox")!.appendChild(ele);
   }
 
+  // TODO: Update isExport error message
   completeProgressWindow(isExport: boolean, msg: string = "") {
     if (!this.progressWindow) return;
     const doc = this.progressWindow.document;
