@@ -10,11 +10,16 @@
     <style>
       #box {
         margin: auto;
+        margin-top: 15px;
         width: 60%;
-        border: 2px solid #f4d754;
         padding: 10px;
         width: 320px;
         height: 200px;
+      }
+
+      .normal_box {
+        border: 2px solid #f4d754;
+        border-radius: 4px;
       }
 
       #progress {
@@ -41,6 +46,24 @@
         padding-right: 15px;
         padding-top: 4px;
       }
+
+      .blink_box {
+        animation: blink 800ms ease-out infinite alternate;
+      }
+      @keyframes blink {
+        0% {
+          border-color: rgb(226, 70, 56);
+          box-shadow:
+            0 0 5px rgba(223, 9, 166, 0.2),
+            inset 0 0 5px rgba(227, 27, 54, 0.1);
+        }
+        100% {
+          border-color: rgb(255, 102, 102);
+          box-shadow:
+            0 0 15px rgba(235, 6, 59, 0.6),
+            inset 0 0 8px rgba(235, 6, 59, 0.4);
+        }
+      }
     </style>
     <script>
       window.onload = function () {
@@ -52,7 +75,7 @@
   </head>
 
   <body>
-    <div id="box">
+    <div id="box" class="normal_box">
       <div id="status"></div>
       <progress id="progress" max="100" value="0"></progress>
       <button id="button1" onclick="window.close();">Cancel</button>

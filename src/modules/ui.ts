@@ -189,19 +189,18 @@ export default class Progress {
   }
 
   // TODO: Update isExport error message
-  completeProgressWindow(isExport: boolean, msg: string = "") {
+  completeProgressWindow(
+    status: boolean,
+    statusMsg: string,
+    footerMsg: string = "",
+  ) {
     if (!this.progressWindow) return;
     const doc = this.progressWindow.document;
+    if (!status) doc.querySelector("#box")!.className = "blink_box";
     doc.querySelector("#progress")!.setAttribute("value", "100");
     doc.querySelector("#button1")!.textContent = "OK";
-    if (isExport) {
-      doc.querySelector("#msg")!.textContent = msg;
-    } else {
-      doc.querySelector("#status")!.textContent = getString("finish");
-      doc.querySelector("#msg")!.textContent = msg
-        ? msg
-        : getString("complete-msg");
-    }
+    doc.querySelector("#msg")!.textContent = footerMsg;
+    doc.querySelector("#status")!.textContent = statusMsg;
   }
 
   async openSelectWindow(io: any) {

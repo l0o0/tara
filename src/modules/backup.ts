@@ -47,10 +47,11 @@ export async function getFilteredPrefs() {
     "extensions.zotero.scaffold.translatorsDir",
     "extensions.zotero.scaffold.eslint.enabled",
     "extensions.zotero.tara.itemID",
+    "extensions.zotero.tara.exportDir",
     "extensions.zotero.thirdPartyCache",
     "extensions.zotero.zotero.asyncTemp",
     "extensions.zoteroWinWordIntegration.installed",
-    "extensions.zoteroWinWordIntegration.version"
+    "extensions.zoteroWinWordIntegration.version",
   ];
   for (const p in prefs) {
     if (dropPrefs.includes(p)) delete prefs[p];
@@ -96,7 +97,8 @@ export async function getAddonInfos() {
   ];
   const addoninfos: Array<AddonInfo> = [];
   for (const addon of await AddonManager.getAllAddons()) {
-    if (wordPluginIDs.includes(addon.id)) continue;
+    // Weird plugin has undefined addon id
+    if (wordPluginIDs.includes(addon.id) && !addon.id) continue;
     addoninfos.push({
       id: addon.id,
       userDisabled: addon.userDisabled,
@@ -259,13 +261,24 @@ export async function createBackupFile(isExport = false) {
       addon.data.progress.queue = [];
     }
   }
+
+  let msg: string;
+  if (isExport && success) {
+    msg = getString("export-success-msg", {
+      args: { folder: getPref("exportDir"), zipfile: zipFilename },
+    });
+  } else if (isExport && !success) {
+    msg = getString("export-fail-msg");
+  } else if (!isExport && !success) {
+    msg = getString("export-item-fail-msg");
+  } else {
+    msg = getString("export-item-success-msg");
+  }
+
   addon.data.progress.completeProgressWindow(
-    isExport,
-    isExport
-      ? getString("export-msg", {
-        args: { folder: getPref("exportDir"), zipfile: zipFilename },
-      })
-      : getString("complete-msg"),
+    success,
+    success ? getString("export-success") : getString("export-fail"),
+    msg,
   );
   ztoolkit.log("Create backup zip complete");
 }
@@ -387,72 +400,75 @@ export async function restoreFromFile(filename: string) {
   addon.data.progress.queue = ["unzip"].concat(getQueue());
   addon.data.progress.totalTasks = addon.data.progress.queue.length;
   const dataDir = Zotero.Prefs.get("dataDir") as string;
-  const profileDir: string = Zotero.Profile.dir;
   await addon.data.progress.openProgressWindow({
     header: getString("restore-header"),
   });
   const backupPrefsPath = PathUtils.join(tmpDir, "backup.json");
   let backupPrefs: any;
   let success = true;
+  let backupZoteroVersion = "";
   while (addon.data.progress.queue.length > 0) {
     const task = addon.data.progress.queue.shift();
     let s: any, t: any;
     try {
       switch (task) {
         case "unzip":
-          ztoolkit.log(filename, tmpDir);
+          ztoolkit.log("restore unzip");
           await unzipToTemporaryDir(filename, tmpDir);
           break;
-        case "addons":
+        case "keepAddons":
+          ztoolkit.log("restore addons");
           backupPrefs = JSON.parse(
             (await Zotero.File.getContentsAsync(backupPrefsPath)) as string,
           );
           for (const addon of backupPrefs.addons) {
-            ztoolkit.log(`** Tara Tara install addon ${addon.path}`);
-            if (addon.path.endsWith(".xpi")) {
-              const xpi = PathUtils.join(
-                tmpDir,
-                "extensions",
-                PathUtils.filename(addon.path),
-              );
-              const xpiFile = Zotero.File.pathToFile(xpi);
+            ztoolkit.log(`** Tara install addon ${addon.id}`);
+            const addonFile =
+              PathUtils.join(PathUtils.join(tmpDir, "extensions"), addon.id) +
+              ".xpi";
+            const isExist = await IOUtils.exists(addonFile);
+            ztoolkit.log(addonFile);
+            ztoolkit.log(isExist);
+            if (isExist) {
+              const xpiFile = Zotero.File.pathToFile(addonFile);
               // If addon is installed, set userDisabled
-              AddonManager.getAddonByID(addon.id, function (a: any) {
-                if (a) {
-                  a.userDisabled = addon.userDisabled;
-                } else {
-                  AddonManager.getInstallForFile(xpiFile, (a: any) =>
-                    a.install(),
-                  );
-                }
-              });
-            } else {
-              const isExist = await IOUtils.exists(addon.path);
-              if (isExist) {
-                const s = PathUtils.join(tmpDir, "extensions", addon.id);
-                const t = PathUtils.join(profileDir, "extensions", addon.id);
-                const tExists = await IOUtils.exists(t);
-                if (!tExists) {
-                  await Zotero.File.copyToUnique(s, t);
-                }
+              const installedAddon = await AddonManager.getAddonByID(addon.id);
+              if (installedAddon && installedAddon.id) {
+                if (installedAddon.userDisabled != addon.userDisabled)
+                  installedAddon.userDisabled = addon.userDisabled;
               } else {
-                ztoolkit.log(`** Tara Tara missing addon ${addon.path}`);
+                const installedResult =
+                  await AddonManager.getInstallForFile(xpiFile);
+                if (
+                  !installedResult.addon ||
+                  installedResult.isCompatible ||
+                  installedResult.isPlatformCompatible
+                ) {
+                  ztoolkit.log("plugin install failed or incompatible");
+                } else {
+                  installedResult.install();
+                }
               }
+            } else {
+              ztoolkit.log(`**missing addon ${addon.id}`);
             }
           }
           break;
         case "keepCSLs":
+          ztoolkit.log("restore CSLs");
           s = PathUtils.join(tmpDir, "styles");
           t = PathUtils.join(dataDir, "styles");
           await Zotero.File.copyDirectory(s, t);
           break;
         case "keepTranslators":
+          ztoolkit.log("restore translators");
           s = PathUtils.join(tmpDir, "translators");
           t = PathUtils.join(dataDir, "translators");
           ztoolkit.log(`restore locate, ${s}, ${t}`);
           await Zotero.File.copyDirectory(s, t);
           break;
         case "keepLocate":
+          ztoolkit.log("restore locate");
           s = PathUtils.join(tmpDir, "locate");
           t = PathUtils.join(dataDir, "locate");
           await Zotero.File.iterateDirectory(s, async function (entry: any) {
@@ -465,10 +481,15 @@ export async function restoreFromFile(filename: string) {
                 PathUtils.join(t, entry.name),
               )) as string;
               const engines = JSON.parse(contents);
-              const allContents = enginesBackup.concat(engines);
+              const engineNames = engines.map((e: any) => e._name);
+              enginesBackup.forEach((e: any) => {
+                if (!engineNames.includes(e._name)) {
+                  engines.push(e);
+                }
+              });
               await Zotero.File.putContentsAsync(
                 Zotero.File.pathToFile(PathUtils.join(t, entry.name)),
-                allContents,
+                JSON.stringify(engines),
               );
             } else {
               await Zotero.File.copyToUnique(
@@ -479,9 +500,11 @@ export async function restoreFromFile(filename: string) {
           });
           break;
         case "keepPrefs":
+          ztoolkit.log("restore preferences");
           backupPrefs = JSON.parse(
             (await Zotero.File.getContentsAsync(backupPrefsPath)) as string,
           );
+          backupZoteroVersion = backupPrefs.ZoteroVersion;
           for (const pkey in backupPrefs.preferences) {
             // 过程个性化的目录设置
             if (pkey.search(/dir|path|folder/i) > 0) {
@@ -514,10 +537,17 @@ export async function restoreFromFile(filename: string) {
       addon.data.progress.updateProgressWindow(task, false);
     }
   }
+  let caution = "";
+  if (
+    Zotero.version.slice(0, 1) == "7" &&
+    backupZoteroVersion.slice(0, 1) == "6"
+  )
+    caution = getString("version-update-msg");
   addon.data.progress.completeProgressWindow(
-    false,
+    success,
+    success ? getString("restore-success") : getString("restore-fail"),
     success
-      ? getString("restore-complete-msg")
-      : getString("restore-complete-msg-fail"),
+      ? getString("restore-success-msg") + caution
+      : getString("restore-fail-msg"),
   );
 }
