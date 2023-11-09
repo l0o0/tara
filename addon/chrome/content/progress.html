@@ -1,86 +1,87 @@
 <!doctype html>
 <html>
-  <head>
-    <title>Tara</title>
-    <link
-      rel="icon"
-      type="image/x-icon"
-      href="chrome://tara/skin/tara_icon.png"
-    />
-    <style>
-      #box {
-        margin: auto;
-        margin-top: 15px;
-        width: 60%;
-        padding: 10px;
-        width: 320px;
-        height: 200px;
+
+<head>
+  <title>Tara</title>
+  <link rel="icon" type="image/x-icon" href="chrome://tara/skin/tara_icon.png" />
+  <style>
+    #box {
+      margin: auto;
+      margin-top: 15px;
+      width: 60%;
+      padding: 10px;
+      width: 320px;
+      height: 215px;
+    }
+
+    .normal_box {
+      border: 2px solid #f4d754;
+      border-radius: 4px;
+    }
+
+    #progress {
+      width: 220px;
+    }
+
+    #status {
+      height: 20px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding-left: 5px;
+      padding-bottom: 2px;
+    }
+
+    #button1 {
+      width: 60px;
+      float: right;
+    }
+
+    #msg {
+      padding-left: 15px;
+      padding-right: 15px;
+      padding-top: 4px;
+      font-size: 0.9em;
+    }
+
+    .blink_box {
+      animation: blink 800ms ease-out infinite alternate;
+    }
+
+    @keyframes blink {
+      0% {
+        border-color: rgb(226, 70, 56);
+        box-shadow:
+          0 0 5px rgba(223, 9, 166, 0.2),
+          inset 0 0 5px rgba(227, 27, 54, 0.1);
       }
 
-      .normal_box {
-        border: 2px solid #f4d754;
-        border-radius: 4px;
+      100% {
+        border-color: rgb(255, 102, 102);
+        box-shadow:
+          0 0 15px rgba(235, 6, 59, 0.6),
+          inset 0 0 8px rgba(235, 6, 59, 0.4);
       }
+    }
+  </style>
+  <script>
+    window.onload = function () {
+      var io = window.arguments[0];
+      if (io.header)
+        document.querySelector("#status").textContent = io.header;
+    };
+  </script>
+</head>
 
-      #progress {
-        width: 220px;
-      }
+<body>
+  <div id="box" class="normal_box">
+    <div id="status"></div>
+    <progress id="progress" max="100" value="0"></progress>
+    <button id="button1" onclick="window.close();">Cancel</button>
+    <ul id="listbox"></ul>
+  </div>
+  <div id="msg"></div>
+</body>
 
-      #status {
-        height: 20px;
-      }
-
-      ul {
-        list-style-type: none;
-        padding-left: 5px;
-        padding-bottom: 2px;
-      }
-
-      #button1 {
-        width: 60px;
-        float: right;
-      }
-
-      #msg {
-        padding-left: 15px;
-        padding-right: 15px;
-        padding-top: 4px;
-      }
-
-      .blink_box {
-        animation: blink 800ms ease-out infinite alternate;
-      }
-      @keyframes blink {
-        0% {
-          border-color: rgb(226, 70, 56);
-          box-shadow:
-            0 0 5px rgba(223, 9, 166, 0.2),
-            inset 0 0 5px rgba(227, 27, 54, 0.1);
-        }
-        100% {
-          border-color: rgb(255, 102, 102);
-          box-shadow:
-            0 0 15px rgba(235, 6, 59, 0.6),
-            inset 0 0 8px rgba(235, 6, 59, 0.4);
-        }
-      }
-    </style>
-    <script>
-      window.onload = function () {
-        var io = window.arguments[0];
-        if (io.header)
-          document.querySelector("#status").textContent = io.header;
-      };
-    </script>
-  </head>
-
-  <body>
-    <div id="box" class="normal_box">
-      <div id="status"></div>
-      <progress id="progress" max="100" value="0"></progress>
-      <button id="button1" onclick="window.close();">Cancel</button>
-      <ul id="listbox"></ul>
-    </div>
-    <div id="msg"></div>
-  </body>
 </html>

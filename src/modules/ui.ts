@@ -145,7 +145,7 @@ export default class Progress {
   async openProgressWindow(io: any) {
     this.progressWindow = await this.openWindow(
       "chrome://tara/content/progress.html",
-      "chrome,close=yes,resizable=no,dependent,dialog,centerscreen,height=290,width=380",
+      "chrome,close=yes,resizable=no,dependent,dialog,centerscreen,height=310,width=380",
       io,
     );
     // Reset progressWindow when progres window is closed.

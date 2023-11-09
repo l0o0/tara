@@ -146,9 +146,6 @@ export async function getBackupInfos() {
 }
 
 export async function createBackupFile(isExport = false) {
-  // await addon.data.progress.openProgressWindow(
-  //   _Addon.locale.getString("backup.header"),
-  // );
   // Create a temporary folder. Data in backup folder
   const cacheTmp = Zotero.getTempDirectory();
   const tmpDir = cacheTmp.path;
@@ -247,6 +244,7 @@ export async function createBackupFile(isExport = false) {
         }
         case "keepTaraXPI":
           ztoolkit.log("** Tara keepTaraXPI");
+          await Zotero.File.removeIfExists(PathUtils.join(getPref("exportDir") as string, "tara.xpi"));
           await Zotero.File.copyToUnique(
             PathUtils.join(profileDir, "extensions", "tara@linxzh.com.xpi"),
             PathUtils.join(getPref("exportDir") as string, "tara.xpi"),
@@ -447,6 +445,8 @@ export async function restoreFromFile(filename: string) {
                   ztoolkit.log("plugin install failed or incompatible");
                 } else {
                   installedResult.install();
+                  // TODO: Need to check this code really works
+                  installedResult.addon.userDisabled = addon.userDisabled;
                 }
               }
             } else {
