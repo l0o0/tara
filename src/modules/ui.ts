@@ -188,7 +188,6 @@ export default class Progress {
     doc.querySelector("#listbox")!.appendChild(ele);
   }
 
-  // TODO: Update isExport error message
   completeProgressWindow(
     status: boolean,
     statusMsg: string,

@@ -244,7 +244,9 @@ export async function createBackupFile(isExport = false) {
         }
         case "keepTaraXPI":
           ztoolkit.log("** Tara keepTaraXPI");
-          await Zotero.File.removeIfExists(PathUtils.join(getPref("exportDir") as string, "tara.xpi"));
+          await Zotero.File.removeIfExists(
+            PathUtils.join(getPref("exportDir") as string, "tara.xpi"),
+          );
           await Zotero.File.copyToUnique(
             PathUtils.join(profileDir, "extensions", "tara@linxzh.com.xpi"),
             PathUtils.join(getPref("exportDir") as string, "tara.xpi"),
@@ -420,7 +422,7 @@ export async function restoreFromFile(filename: string) {
             (await Zotero.File.getContentsAsync(backupPrefsPath)) as string,
           );
           for (const addon of backupPrefs.addons) {
-            ztoolkit.log(`** Tara install addon ${addon.id}`);
+            ztoolkit.log(`install addon ${addon.id} ${addon.userDisabled}`);
             const addonFile =
               PathUtils.join(PathUtils.join(tmpDir, "extensions"), addon.id) +
               ".xpi";
@@ -429,24 +431,23 @@ export async function restoreFromFile(filename: string) {
             ztoolkit.log(isExist);
             if (isExist) {
               const xpiFile = Zotero.File.pathToFile(addonFile);
-              // If addon is installed, set userDisabled
-              const installedAddon = await AddonManager.getAddonByID(addon.id);
-              if (installedAddon && installedAddon.id) {
-                if (installedAddon.userDisabled != addon.userDisabled)
-                  installedAddon.userDisabled = addon.userDisabled;
+              const installedResult =
+                await AddonManager.getInstallForFile(xpiFile);
+              if (
+                !installedResult.addon ||
+                installedResult.isCompatible ||
+                installedResult.isPlatformCompatible
+              ) {
+                ztoolkit.log("plugin install failed or incompatible");
               } else {
-                const installedResult =
-                  await AddonManager.getInstallForFile(xpiFile);
-                if (
-                  !installedResult.addon ||
-                  installedResult.isCompatible ||
-                  installedResult.isPlatformCompatible
-                ) {
-                  ztoolkit.log("plugin install failed or incompatible");
+                await installedResult.install();
+                const installedAddon = await AddonManager.getAddonByID(
+                  addon.id,
+                );
+                if (addon.userDisabled) {
+                  await installedAddon.disable();
                 } else {
-                  installedResult.install();
-                  // TODO: Need to check this code really works
-                  installedResult.addon.userDisabled = addon.userDisabled;
+                  await installedAddon.enable();
                 }
               }
             } else {
