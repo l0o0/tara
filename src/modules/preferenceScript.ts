@@ -4,7 +4,11 @@ import { setPref, getPref } from "../utils/prefs";
 
 // Init complex preference value
 export function initPrefs() {
-  if (!getPref("exportDir")) setPref("exportDir", PathUtils.join(Zotero.Prefs.get("dataDir") as string, "Tara"));
+  if (!getPref("exportDir"))
+    setPref(
+      "exportDir",
+      PathUtils.join(Zotero.Prefs.get("dataDir") as string, "Tara"),
+    );
 }
 
 export async function registerPrefsScripts(_window: Window) {

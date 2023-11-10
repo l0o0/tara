@@ -505,7 +505,7 @@ export async function restoreFromFile(filename: string) {
           backupPrefs = JSON.parse(
             (await Zotero.File.getContentsAsync(backupPrefsPath)) as string,
           );
-          backupZoteroVersion = backupPrefs.ZoteroVersion || '6'; // Old Tara in Zotero 6 do not have this pref.
+          backupZoteroVersion = backupPrefs.ZoteroVersion || "6"; // Old Tara in Zotero 6 do not have this pref.
           for (const pkey in backupPrefs.preferences) {
             // 过程个性化的目录设置
             if (pkey.search(/dir|path|folder/i) > 0) {
