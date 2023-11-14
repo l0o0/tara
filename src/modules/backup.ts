@@ -30,8 +30,8 @@ export function getQueue() {
   return queue;
 }
 
-export async function getFilteredPrefs() {
-  const prefs = await readPrefsFromFile();
+export function getFilteredPrefs() {
+  const prefs = getPrefInfos();
   const dropPrefs: Array<string> = [
     "extensions.zotero.dataDir",
     "extensions.zotero.firstRun.skipFirefoxProfileAccessCheck",
@@ -90,6 +90,14 @@ export async function readPrefsFromFile() {
   return await Zotero.Profile.readPrefsFromFile(prefsFile);
 }
 
+// Only user modified prefs will be kept
+function getPrefInfos() {
+  const rootBranch = ztoolkit.getGlobal("Zotero").Prefs.rootBranch;
+  return rootBranch
+    .getChildList("extensions.")
+    .filter((p: string) => rootBranch.prefHasUserValue(p));
+}
+
 export async function getAddonInfos() {
   const wordPluginIDs = [
     "ZoteroOpenOfficeIntegration@Zotero.org",
@@ -126,7 +134,7 @@ export async function getTranslatorInfos() {
 
 export async function getBackupInfos() {
   const addonInfos = await getAddonInfos();
-  const prefsInfos = await getFilteredPrefs();
+  const prefsInfos = getFilteredPrefs();
   const cslInfos = getStyleInfos();
   const tInfos = await getTranslatorInfos();
   return {
@@ -505,7 +513,7 @@ export async function restoreFromFile(filename: string) {
           backupPrefs = JSON.parse(
             (await Zotero.File.getContentsAsync(backupPrefsPath)) as string,
           );
-          backupZoteroVersion = backupPrefs.ZoteroVersion || "6"; // Old Tara in Zotero 6 do not have this pref.
+          backupZoteroVersion = backupPrefs.ZoteroVersion;
           for (const pkey in backupPrefs.preferences) {
             // 过程个性化的目录设置
             if (pkey.search(/dir|path|folder/i) > 0) {
@@ -523,8 +531,9 @@ export async function restoreFromFile(filename: string) {
             }
             if (backupPrefs.preferences[pkey]) {
               Zotero.Prefs.set(
-                pkey.replace(/^extensions\.zotero\./, ""),
+                pkey,
                 backupPrefs.preferences[pkey],
+                true, // All preferences are set in global.
               );
             }
           }
