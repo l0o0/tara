@@ -40,8 +40,16 @@ class Utils extends AddonModule {
         return prefs;
     }
 
-    public async getFilteredPrefs() {
-        let prefs: Map<string, any> = await this.readPrefsFromFile();
+    // Only user modified prefs will be kept
+    public getPrefInfos() {
+        const rootBranch = this._Addon._Zotero.Prefs.rootBranch;
+        return rootBranch
+        .getChildList("extensions.")
+        .filter((p: string) => rootBranch.prefHasUserValue(p));
+    }
+
+    public getFilteredPrefs() {
+        let prefs: Map<string, any> = this.getPrefInfos();
         let dropPrefs: Array<string> = [
             "extensions.zotero.dataDir",
             "extensions.zotero.firstRun.skipFirefoxProfileAccessCheck",
@@ -57,6 +65,11 @@ class Utils extends AddonModule {
             "extensions.zotero.scaffold.translatorsDir",
             "extensions.zotero.scaffold.eslint.enabled",
             "extensions.zotero.tara.itemID",
+            "extensions.zotero.tara.exportDir",
+            "extensions.zotero.thirdPartyCache",
+            "extensions.zotero.zotero.asyncTemp",
+            "extensions.zoteroWinWordIntegration.installed",
+            "extensions.zoteroWinWordIntegration.version"
         ];
 
         for (let p in prefs) {
@@ -141,6 +154,7 @@ class Utils extends AddonModule {
         let tInfos = await this.getTranslatorInfos();
         return {
             createTime: new Date().toISOString(),
+            ZoteroVersion: Zotero.version,
             meta: {
                 prefNum: Object.keys(prefsInfos).length,
                 addonNum: addonInfos.length,
@@ -489,7 +503,6 @@ class Utils extends AddonModule {
                         this._Addon._Zotero.File.getContents(backupPrefsPath)
                     );
                     for (let pkey in backupPrefs.preferences) {
-                        pkey = pkey.replace(/^extensions\./, "");
                         if (pkey.search(/dir|path|folder/i)) {
                             let isExists = await OS.File.exists(
                                 backupPrefs.preferences[pkey]
@@ -498,7 +511,8 @@ class Utils extends AddonModule {
                         }
                         this._Addon._Zotero.Prefs.set(
                             pkey,
-                            backupPrefs.preferences[pkey]
+                            backupPrefs.preferences[pkey],
+                            true
                         );
                     }
                 }
