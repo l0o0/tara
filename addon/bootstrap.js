@@ -6,16 +6,22 @@
  */
 
 var chromeHandle;
+ps = Components.classes['@mozilla.org/embedcomp/prompt-service;1'].getService(Components.interfaces.nsIPromptService)
 
-function install(data, reason) {}
+function install(data, reason) { }
 
 async function startup({ id, version, resourceURI, rootURI }, reason) {
-  await Zotero.initializationPromise;
+  //   await Zotero.initializationPromise;
+  //   Zotero.debug(id);
+  //   Zotero.debug(version);
+  //   Zotero.debug(resourceURI);
+  //   Zotero.debug(rootURI);
 
   // String 'rootURI' introduced in Zotero 7
   if (!rootURI) {
     rootURI = resourceURI.spec;
   }
+  ps.alert(null, 'AAA', `${id},${version}, ${resourceURI}, ${rootURI}`);
 
   var aomStartup = Components.classes[
     "@mozilla.org/addons/addon-manager-startup;1"
@@ -29,7 +35,7 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
    * Global variables for plugin code.
    * The `_globalThis` is the global root variable of the plugin sandbox environment
    * and all child variables assigned to it is globally accessible.
-   * See `src/index.ts` for details.
+   * See `src / index.ts` for details.
    */
   const ctx = {
     rootURI,
@@ -37,17 +43,17 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
   ctx._globalThis = ctx;
 
   Services.scriptloader.loadSubScript(
-    `${rootURI}/chrome/content/scripts/__addonRef__.js`,
+    `${rootURI} / chrome / content / scripts / __addonRef__.js`,
     ctx,
   );
 }
 
 async function onMainWindowLoad({ window }, reason) {
-  Zotero.__addonInstance__?.hooks.onMainWindowLoad(window);
+  Zotero.__addonInstance__.hooks.onMainWindowLoad(window);
 }
 
 async function onMainWindowUnload({ window }, reason) {
-  Zotero.__addonInstance__?.hooks.onMainWindowUnload(window);
+  Zotero.__addonInstance__.hooks.onMainWindowUnload(window);
 }
 
 function shutdown({ id, version, resourceURI, rootURI }, reason) {
@@ -60,13 +66,13 @@ function shutdown({ id, version, resourceURI, rootURI }, reason) {
       Components.interfaces.nsISupports,
     ).wrappedJSObject;
   }
-  Zotero.__addonInstance__?.hooks.onShutdown();
+  Zotero.__addonInstance__.hooks.onShutdown();
 
   Cc["@mozilla.org/intl/stringbundle;1"]
     .getService(Components.interfaces.nsIStringBundleService)
     .flushBundles();
 
-  Cu.unload(`${rootURI}/chrome/content/scripts/__addonRef__.js`);
+  Cu.unload(`${rootURI} / chrome / content / scripts / __addonRef__.js`);
 
   if (chromeHandle) {
     chromeHandle.destruct();
@@ -74,4 +80,4 @@ function shutdown({ id, version, resourceURI, rootURI }, reason) {
   }
 }
 
-function uninstall(data, reason) {}
+function uninstall(data, reason) { }
