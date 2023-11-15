@@ -146,6 +146,8 @@ function replaceString() {
       `${buildDir}/addon/prefs.js`,
       `${buildDir}/addon/manifest.json`,
       `${buildDir}/addon/bootstrap.js`,
+      `${buildDir}/addon/install.rdf`,
+      `${buildDir}/addon/chrome.manifest`
     ],
     from: replaceFrom,
     to: replaceTo,
