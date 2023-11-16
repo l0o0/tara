@@ -111,12 +111,12 @@ async function main() {
 
     const optionsAddon = {
         files: [
-            path.join(buildDir, "**/*.rdf"),
-            path.join(buildDir, "**/*.dtd"),
-            path.join(buildDir, "**/*.xul"),
-            path.join(buildDir, "**/*.manifest"),
-            path.join(buildDir, "addon/defaults", "**/*.js"),
-            path.join(buildDir, "addon/bootstrap.js"),
+            `${buildDir}/**/*.rdf`,
+            `${buildDir}/**/*.dtd`,
+            `${buildDir}/**/*.xul`,
+            `${buildDir}/**/*.manifest`,
+            `${buildDir}/addon/defaults", "**/*.js`,
+            `${buildDir}/addon/bootstrap.js`,
             "update.rdf",
         ],
         from: [
