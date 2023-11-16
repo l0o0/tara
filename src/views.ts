@@ -121,7 +121,7 @@ class AddonViews extends AddonModule {
             this.progressWindow = win.openDialog(
                 "chrome://tara/content/progress.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=380",
+                "chrome,close=yes,dependent,dialog,centerscreen,height=280,width=380",
                 {header: header}
             );
         } else {
@@ -129,7 +129,7 @@ class AddonViews extends AddonModule {
                 null,
                 "chrome://tara/content/progress.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=260,width=380",
+                "chrome,close=yes,dependent,dialog,centerscreen,height=280,width=380",
                 {header: header}
             );
         }

@@ -3,7 +3,9 @@ import AddonModule from "./module";
 
 Components.utils.import("resource://gre/modules/osfile.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
-Components.utils.import("resource://gre/modules/AddonManager.jsm");
+const AddonManager = Components.utils.import(
+    "resource://gre/modules/AddonManager.jsm"
+);
 
 class Utils extends AddonModule {
     constructor(parent: Addon) {
@@ -13,13 +15,12 @@ class Utils extends AddonModule {
     public async createBackupItem() {
         // Search the exsiting Backup Item.
         var s = new this._Addon._Zotero.Search();
-        s.addCondition('title', 'is', 'Tara_Backup');
+        s.addCondition("title", "is", "Tara_Backup");
         var itemID = await s.search();
         if (itemID.length) {
             // Use the first item returned.
             this._Addon._Zotero.Prefs.set("tara.itemID", itemID[0]);
-        }
-        else {
+        } else {
             // Create Docuement Item for store backup zip file.
             let item = new this._Addon._Zotero.Item("document");
             item.setField("title", "Tara_Backup");
@@ -44,8 +45,8 @@ class Utils extends AddonModule {
     public getPrefInfos() {
         const rootBranch = this._Addon._Zotero.Prefs.rootBranch;
         return rootBranch
-        .getChildList("extensions.")
-        .filter((p: string) => rootBranch.prefHasUserValue(p));
+            .getChildList("extensions.")
+            .filter((p: string) => rootBranch.prefHasUserValue(p));
     }
 
     public getFilteredPrefs() {
@@ -69,12 +70,12 @@ class Utils extends AddonModule {
             "extensions.zotero.thirdPartyCache",
             "extensions.zotero.zotero.asyncTemp",
             "extensions.zoteroWinWordIntegration.installed",
-            "extensions.zoteroWinWordIntegration.version"
+            "extensions.zoteroWinWordIntegration.version",
         ];
 
         for (let p in prefs) {
             if (p in dropPrefs) {
-                prefs.delete(p);
+                delete prefs[p];
             }
         }
         return prefs;
@@ -113,7 +114,7 @@ class Utils extends AddonModule {
         let infos = extensionsInfo["addons"];
 
         infos = infos.filter(
-            (e) => e.type == "extension" && !wordPlugins.includes(e.id)
+            (e) => e.type == "extension" && wordPlugins.indexOf(e.id) == -1
         );
 
         let filteredInfos = infos.map(function (e) {
@@ -149,12 +150,12 @@ class Utils extends AddonModule {
 
     public async getBackupInfos() {
         let addonInfos = await this.getAddonInfos();
-        let prefsInfos = await this.getFilteredPrefs();
+        let prefsInfos = this.getFilteredPrefs();
         let cslInfos = this.getStyleInfos();
         let tInfos = await this.getTranslatorInfos();
         return {
             createTime: new Date().toISOString(),
-            ZoteroVersion: Zotero.version,
+            ZoteroVersion: this._Addon._Zotero.version,
             meta: {
                 prefNum: Object.keys(prefsInfos).length,
                 addonNum: addonInfos.length,
@@ -169,11 +170,16 @@ class Utils extends AddonModule {
     }
 
     public async createBackupZIP(isExport = false) {
-        await this._Addon.views.openProgressWindow(this._Addon.locale.getString("backup.header"));
+        await this._Addon.views.openProgressWindow(
+            this._Addon.locale.getString("backup.header")
+        );
         // Create a temporary folder. Data in backup folder
         let cacheTmp = this._Addon._Zotero.getTempDirectory();
         const tmpDir = cacheTmp.path;
-        const zipFilename = `${new Date().toLocaleString()}_backup.zip`.replace(/[\s\/:]/g, '_');
+        const zipFilename = `${new Date().toLocaleString()}_backup.zip`.replace(
+            /[\s\/:]/g,
+            "_"
+        );
         // Remove existing backup data.
         cacheTmp.append("Backup");
         if (cacheTmp.exists()) {
@@ -256,18 +262,27 @@ class Utils extends AddonModule {
                     );
                 } else if (task == "keepTaraXPI") {
                     this._Addon._Zotero.debug("** Tara keepTaraXPI");
+                    const taraPath = OS.Path.join(
+                        this._Addon._Zotero.Prefs.get("tara.exportDir"),
+                        "tara.xpi"
+                    );
+                    await this._Addon._Zotero.File.removeIfExists(taraPath);
                     await this._Addon._Zotero.File.copyToUnique(
                         OS.Path.join(
                             profileDir,
                             "extensions",
                             "tara@linxzh.com.xpi"
                         ),
-                        OS.Path.join(this._Addon._Zotero.Prefs.get("tara.exportDir"), "tara.xpi")
+                        taraPath
                     );
                 }
-                let pvalue = this.getProgress(this._Addon.views.queue.length, totalTasks)
+                let pvalue = this.getProgress(
+                    this._Addon.views.queue.length,
+                    totalTasks
+                );
                 this._Addon.views.updateProgressWindow(task, true, pvalue);
             } catch (e) {
+                this._Addon._Zotero.debug(e);
                 this._Addon.views.updateProgressWindow(task, false);
             }
         }
@@ -276,7 +291,9 @@ class Utils extends AddonModule {
     }
 
     public async createBackupAsAttachment() {
-        this._Addon._Zotero.debug("** Tara Tara start create Backup As Attachment");
+        this._Addon._Zotero.debug(
+            "** Tara Tara start create Backup As Attachment"
+        );
 
         // Backup parts in a queue
         let queue = {
@@ -289,7 +306,9 @@ class Utils extends AddonModule {
         };
         this._Addon.views.queue = Object.keys(queue).filter((k) => queue[k]);
         await this.createBackupZIP();
-        this._Addon._Zotero.debug("** Tara Tara finish create Backup As Attachment");
+        this._Addon._Zotero.debug(
+            "** Tara Tara finish create Backup As Attachment"
+        );
     }
 
     public async exportBackup() {
@@ -353,7 +372,8 @@ class Utils extends AddonModule {
         let backupItemID = this._Addon._Zotero.Prefs.get("tara.itemID");
         let zoteroPane = this._Addon._Zotero.getActiveZoteroPane();
         await zoteroPane.addAttachmentFromDialog(false, backupItemID);
-        let attachmentID = this._Addon._Zotero.Items.get(backupItemID).getAttachments()[0];
+        let attachmentID =
+            this._Addon._Zotero.Items.get(backupItemID).getAttachments()[0];
         let attachment = this._Addon._Zotero.Items.get(attachmentID);
         this.restoreFromFile(attachment);
     }
@@ -365,7 +385,11 @@ class Utils extends AddonModule {
             deferred: this._Addon._Zotero.Promise.defer(),
         };
         var attachment;
-        if (backupItemID && this._Addon._Zotero.Items.get(backupItemID) && this._Addon._Zotero.Items.get(backupItemID).getAttachments()) {
+        if (
+            backupItemID &&
+            this._Addon._Zotero.Items.get(backupItemID) &&
+            this._Addon._Zotero.Items.get(backupItemID).getAttachments()
+        ) {
             let backupItem = this._Addon._Zotero.Items.get(backupItemID);
             const attachmentIDs = backupItem.getAttachments();
             var files = {};
@@ -383,11 +407,11 @@ class Utils extends AddonModule {
             // No item selected
             if (!io["attachment"]) return;
             attachment = this._Addon._Zotero.Items.get(files[io["attachment"]]);
-        } 
+        }
         this.restoreFromFile(attachment);
     }
 
-    public async restoreFromFile(attachment: _ZoteroItem) {
+    public async restoreFromFile(attachment: Zotero.Item) {
         let cacheTmp = this._Addon._Zotero.getTempDirectory();
         cacheTmp.append("Backup");
         if (cacheTmp.exists()) {
@@ -404,20 +428,21 @@ class Utils extends AddonModule {
         };
         this._Addon.views.queue = Object.keys(queue).filter((k) => queue[k]);
         const totalTasks = this._Addon.views.queue;
-        const dataDir: string =
-                    this._Addon._Zotero.Prefs.get("dataDir");
+        const dataDir: string = this._Addon._Zotero.Prefs.get("dataDir");
         const profileDir: string = this._Addon._Zotero.Profile.dir;
-        await this._Addon.views.openProgressWindow(this._Addon.locale.getString("restore.header"));
+        await this._Addon.views.openProgressWindow(
+            this._Addon.locale.getString("restore.header")
+        );
         while (this._Addon.views.queue.length > 0) {
             let task = this._Addon.views.queue.shift();
             let s, t;
             try {
-                if (task == 'unzip') {
+                if (task == "unzip") {
                     await this.unzipToTemporaryDir(
-                        attachment.getFilePath(),
+                        attachment.getFilePath() as string,
                         tmpDir
                     );
-                } else if (task == 'addons') {
+                } else if (task == "addons") {
                     const backupPrefsPath = OS.Path.join(tmpDir, "backup.json");
                     const backupPrefs = JSON.parse(
                         this._Addon._Zotero.File.getContents(backupPrefsPath)
@@ -432,18 +457,38 @@ class Utils extends AddonModule {
                                 "extensions",
                                 OS.Path.basename(addon.path)
                             );
-                            let xpiFile = this._Addon._Zotero.File.pathToFile(xpi);
+                            const xpiFile =
+                                this._Addon._Zotero.File.pathToFile(xpi);
+                            const isExist = await Zotero.File;
                             // If addon is installed, set userDisabled
-                            AddonManager.getAddonByID(addon.id, function(a) {
-                                if (a) {
-                                    a.userDisabled = addon.userDisabled;
-                                } else {
-                                    AddonManager.getInstallForFile(
-                                        xpiFile,
-                                        (a) => a.install()
+                            if (isExist) {
+                                const installedResult =
+                                    await AddonManager.getInstallForFile(
+                                        xpiFile
                                     );
+                                if (
+                                    !installedResult.addon ||
+                                    installedResult.isCompatible ||
+                                    installedResult.isPlatformCompatible
+                                ) {
+                                    Zotero.debug(
+                                        "plugin install failed or incompatible"
+                                    );
+                                } else {
+                                    await installedResult.install();
+                                    const installedAddon =
+                                        await AddonManager.getAddonByID(
+                                            addon.id
+                                        );
+                                    if (addon.userDisabled) {
+                                        await installedAddon.disable();
+                                    } else {
+                                        await installedAddon.enable();
+                                    }
                                 }
-                            });
+                            } else {
+                                Zotero.debug(`**missing addon ${addon.id}`);
+                            }
                         } else {
                             let isExist = await OS.File.exists(addon.path);
                             if (isExist) {
@@ -459,45 +504,59 @@ class Utils extends AddonModule {
                                 );
                                 let tExists = await OS.File.exists(t);
                                 if (!tExists) {
-                                    await this._Addon._Zotero.File.copyToUnique(s, t);
+                                    await this._Addon._Zotero.File.copyToUnique(
+                                        s,
+                                        t
+                                    );
                                 }
                             } else {
                                 this._Addon._Zotero.debug(
-                                    `** Tara Tara missing addon ${addon.path}`
+                                    `** Tara missing addon ${addon.path}`
                                 );
                             }
                         }
                     }
-                } else if (task == 'styles') {
+                } else if (task == "styles") {
                     s = OS.Path.join(tmpDir, "styles");
                     t = OS.Path.join(dataDir, "styles");
                     await this._Addon._Zotero.File.copyDirectory(s, t);
-                } else if (task == 'translators') {
+                } else if (task == "translators") {
                     s = OS.Path.join(tmpDir, "translators");
                     t = OS.Path.join(dataDir, "translators");
                     await this._Addon._Zotero.File.copyDirectory(s, t);
-                } else if (task == 'locate') {
+                } else if (task == "locate") {
                     s = OS.Path.join(tmpDir, "locate");
                     t = OS.Path.join(dataDir, "locate");
-                    await this._Addon._Zotero.File.iterateDirectory(s, async function(entry) {
-                        if (entry.name === 'engines.json') {
-                            let contentsBackup = this._Addon._Zotero.File.getContents(OS.Path.join(s, entry.name));
-                            let enginesBackup = JSON.parse(contentsBackup);
-                            let contents = this._Addon._Zotero.File.getContents(OS.Path.join(t, entry.name));
-                            let engines = JSON.parse(contents);
-                            let allContents = enginesBackup.concat(engines);
-                            this._Addon._Zotero.File.putContents(
-                                this._Addon._Zotero.File.pathToFile(OS.Path.join(t, entry.name)),
-                                allContents
-                            );
-                        } else {
-                            await this._Addon._Zotero.File.copyToUnique(
-                                OS.Path.join(s, entry.name),
-                                OS.Path.join(t, entry.name)
-                            );
+                    await this._Addon._Zotero.File.iterateDirectory(
+                        s,
+                        async function (entry) {
+                            if (entry.name === "engines.json") {
+                                let contentsBackup =
+                                    this._Addon._Zotero.File.getContents(
+                                        OS.Path.join(s, entry.name)
+                                    );
+                                let enginesBackup = JSON.parse(contentsBackup);
+                                let contents =
+                                    this._Addon._Zotero.File.getContents(
+                                        OS.Path.join(t, entry.name)
+                                    );
+                                let engines = JSON.parse(contents);
+                                let allContents = enginesBackup.concat(engines);
+                                this._Addon._Zotero.File.putContents(
+                                    this._Addon._Zotero.File.pathToFile(
+                                        OS.Path.join(t, entry.name)
+                                    ),
+                                    allContents
+                                );
+                            } else {
+                                await this._Addon._Zotero.File.copyToUnique(
+                                    OS.Path.join(s, entry.name),
+                                    OS.Path.join(t, entry.name)
+                                );
+                            }
                         }
-                    });
-                } else if (task == 'preferences') {
+                    );
+                } else if (task == "preferences") {
                     const backupPrefsPath = OS.Path.join(tmpDir, "backup.json");
                     const backupPrefs = JSON.parse(
                         this._Addon._Zotero.File.getContents(backupPrefsPath)
@@ -516,7 +575,10 @@ class Utils extends AddonModule {
                         );
                     }
                 }
-                let pvalue = this.getProgress(this._Addon.views.queue.length, totalTasks)
+                let pvalue = this.getProgress(
+                    this._Addon.views.queue.length,
+                    totalTasks
+                );
                 this._Addon.views.updateProgressWindow(task, true, pvalue);
             } catch (e) {
                 this._Addon._Zotero.debug(e);
