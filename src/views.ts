@@ -121,7 +121,7 @@ class AddonViews extends AddonModule {
             this.progressWindow = win.openDialog(
                 "chrome://tara/content/progress.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=280,width=380",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=550,width=680",
                 {header: header}
             );
         } else {
@@ -129,7 +129,7 @@ class AddonViews extends AddonModule {
                 null,
                 "chrome://tara/content/progress.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=280,width=380",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=550,width=680",
                 {header: header}
             );
         }
@@ -193,6 +193,7 @@ class AddonViews extends AddonModule {
         if (!this.progressWindow) return;
         let doc = this.progressWindow.document;
         doc.querySelector("#progress").setAttribute("value", '100');
+        doc.querySelector("#status").textContent = this._Addon.locale.getString("status.finish");
         doc.querySelector("#button1").textContent = 'OK';
         if (isExport) {
             doc.querySelector("#msg").textContent = OS.Path.join(this._Addon._Zotero.Prefs.get("dataDir"), 'Backup');

@@ -319,7 +319,7 @@ class Utils extends AddonModule {
         let entries = zipReader.findEntries("*");
         while (entries.hasMore()) {
             let entry = entries.getNext();
-            if (entry.substr(-1) === "/") {
+            if (entry.substr(-1) === "/" || entry.substr(-1) === "\\") {
                 continue;
             }
             // 注意：Win 与 Mac， Linux下压缩文件中的分隔符不同
