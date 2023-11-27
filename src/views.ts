@@ -121,7 +121,7 @@ class AddonViews extends AddonModule {
             this.progressWindow = win.openDialog(
                 "chrome://tara/content/progress.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=550,width=680",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=300,width=380",
                 {header: header}
             );
         } else {
@@ -129,7 +129,7 @@ class AddonViews extends AddonModule {
                 null,
                 "chrome://tara/content/progress.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=550,width=680",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=300,width=380",
                 {header: header}
             );
         }
@@ -211,7 +211,7 @@ class AddonViews extends AddonModule {
             selectWindow = win.openDialog(
                 "chrome://tara/content/select.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=300,width=410",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=310,width=410",
                 io
             );
         } else {
@@ -219,7 +219,7 @@ class AddonViews extends AddonModule {
                 null,
                 "chrome://tara/content/select.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=300,width=410",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=310,width=410",
                 io
             );
         }
