@@ -322,7 +322,11 @@ class Utils extends AddonModule {
             if (entry.substr(-1) === "/") {
                 continue;
             }
-            let destPath = OS.Path.join(tmpDir, ...entry.split(/\//));
+            // 注意：Win 与 Mac， Linux下压缩文件中的分隔符不同
+            let destPath = OS.Path.join(tmpDir, ...entry.split(/[\/\\]/));
+            // this._Addon._Zotero.debug(entry);
+            // this._Addon._Zotero.debug(entry.split(/\//));
+            // this._Addon._Zotero.debug(destPath);
             zipReader.extract(
                 entry,
                 this._Addon._Zotero.File.pathToFile(destPath)
@@ -333,9 +337,7 @@ class Utils extends AddonModule {
 
     public async importFromBackup() {
         // Import from an export backup zip
-        if (!this._Addon._Zotero.Prefs.get("tara.itemID")) {
-            await this.createBackupItem();
-        }
+        await this.createBackupItem();
         let backupItemID = this._Addon._Zotero.Prefs.get("tara.itemID");
         let zoteroPane = this._Addon._Zotero.getActiveZoteroPane();
         await zoteroPane.addAttachmentFromDialog(false, backupItemID);
@@ -345,6 +347,7 @@ class Utils extends AddonModule {
     }
 
     public async restoreFromBackup() {
+        await this.createBackupItem();
         let backupItemID = this._Addon._Zotero.Prefs.get("tara.itemID");
         var io = {
             title: this._Addon.locale.getString("select.title"),
@@ -410,13 +413,13 @@ class Utils extends AddonModule {
                     );
                     for (let addon of backupPrefs.addons) {
                         this._Addon._Zotero.debug(
-                            `** Tara Tara install addon ${addon.path}`
+                            `** Tara install addon ${addon.path}`
                         );
                         if (addon.path.endsWith(".xpi")) {
                             let xpi = OS.Path.join(
                                 tmpDir,
                                 "extensions",
-                                addon.id + ".xpi")
+                                addon.id + ".xpi"
                             );
                             let xpiFile = this._Addon._Zotero.File.pathToFile(xpi);
                             // If addon is installed, set userDisabled
@@ -486,19 +489,22 @@ class Utils extends AddonModule {
                 } else if (task == 'preferences') {
                     const backupPrefsPath = OS.Path.join(tmpDir, "backup.json");
                     const backupPrefs = JSON.parse(
-                        this._Addon._Zotero.File.getContents(backupPrefsPath)
+                        await this._Addon._Zotero.File.getContentsAsync(backupPrefsPath)
                     );
+                    const retest = new RegExp("dir|path|folder", "i")
                     for (let pkey in backupPrefs.preferences) {
-                        pkey = pkey.replace(/^extensions\./, "");
-                        if (pkey.search(/dir|path|folder/i)) {
+                        // 过滤非字符配置，导致文件判断异常
+                        if (retest.test(pkey) && (typeof backupPrefs.preferences[pkey] == 'string')) {
                             let isExists = await OS.File.exists(
                                 backupPrefs.preferences[pkey]
                             );
                             if (!isExists) continue;
                         }
+                        this._Addon._Zotero.debug("set " + pkey + " " + backupPrefs.preferences[pkey]);
                         this._Addon._Zotero.Prefs.set(
                             pkey,
-                            backupPrefs.preferences[pkey]
+                            backupPrefs.preferences[pkey],
+                            true
                         );
                     }
                 }
