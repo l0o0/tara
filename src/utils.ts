@@ -416,7 +416,7 @@ class Utils extends AddonModule {
                             let xpi = OS.Path.join(
                                 tmpDir,
                                 "extensions",
-                                OS.Path.basename(addon.path)
+                                addon.id + ".xpi")
                             );
                             let xpiFile = this._Addon._Zotero.File.pathToFile(xpi);
                             // If addon is installed, set userDisabled
