@@ -514,9 +514,10 @@ export async function restoreFromFile(filename: string) {
             (await Zotero.File.getContentsAsync(backupPrefsPath)) as string,
           );
           backupZoteroVersion = backupPrefs.ZoteroVersion;
+          const retest = new RegExp("dir|path|folder", "i")
           for (const pkey in backupPrefs.preferences) {
-            // 过程个性化的目录设置
-            if (pkey.search(/dir|path|folder/i) > 0) {
+            // 过程个性化的目录设置，避免异常的设置值
+            if (retest.test(pkey) && (typeof backupPrefs.preferences[pkey] == 'string')) {
               ztoolkit.log(pkey);
               ztoolkit.log(backupPrefs.preferences[pkey]);
               let isExists = false;
