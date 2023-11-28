@@ -92,7 +92,7 @@ class Utils extends AddonModule {
             this._Addon._Zotero.Profile.dir,
             "extensions.json"
         );
-        let extensionsContents = this._Addon._Zotero.File.getContents(
+        let extensionsContents = await this._Addon._Zotero.File.getContentsAsync(
             this._Addon._Zotero.File.pathToFile(extensions)
         );
         let extensionsInfo = JSON.parse(extensionsContents);
@@ -302,31 +302,32 @@ class Utils extends AddonModule {
         ].createInstance(Components.interfaces.nsIZipReader);
         zipReader.open(zipFile);
 
-        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(
-            OS.Path.join(tmpDir, "translators")
-        );
-        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(
-            OS.Path.join(tmpDir, "extensions")
-        );
-        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(
-            OS.Path.join(tmpDir, "styles")
-        );
-        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(
-            OS.Path.join(tmpDir, "locate")
-        );
-
+        // ZIP 文件中目录后面是 /
+        let folderEntries = zipReader.findEntries("*/$");
+        let folders = [];
+        while (folderEntries.hasMore()) {
+            let entry = folderEntries.getNext();
+            let folder = OS.Path.join(tmpDir, this._Addon._Zotero.isWin ? entry.replace(/\//g, "\\") : entry);
+            this._Addon._Zotero.debug(folder);
+            folders.push(folder);
+        }
+        folders.sort();// 对文件夹排序，避免缺失父目录造成的异常
+        folders.forEach( async(e) => {await this._Addon._Zotero.File.createDirectoryIfMissingAsync(
+            e
+        );})
         // Extract files
         let entries = zipReader.findEntries("*");
         while (entries.hasMore()) {
             let entry = entries.getNext();
-            if (entry.substr(-1) === "/" || entry.substr(-1) === "\\") {
+            if (entry.endsWith("\/")) {
+                this._Addon._Zotero.debug("Pass folder: " + entry);
                 continue;
             }
             // 注意：Win 与 Mac， Linux下压缩文件中的分隔符不同
             let destPath = OS.Path.join(tmpDir, ...entry.split(/[\/\\]/));
-            // this._Addon._Zotero.debug(entry);
-            // this._Addon._Zotero.debug(entry.split(/\//));
-            // this._Addon._Zotero.debug(destPath);
+            this._Addon._Zotero.debug(entry);
+            this._Addon._Zotero.debug(entry.split(/[\/\\]/));
+            this._Addon._Zotero.debug(destPath);
             zipReader.extract(
                 entry,
                 this._Addon._Zotero.File.pathToFile(destPath)
@@ -409,7 +410,7 @@ class Utils extends AddonModule {
                 } else if (task == 'addons') {
                     const backupPrefsPath = OS.Path.join(tmpDir, "backup.json");
                     const backupPrefs = JSON.parse(
-                        this._Addon._Zotero.File.getContents(backupPrefsPath)
+                       await this._Addon._Zotero.File.getContentsAsync(backupPrefsPath)
                     );
                     for (let addon of backupPrefs.addons) {
                         this._Addon._Zotero.debug(
@@ -470,12 +471,12 @@ class Utils extends AddonModule {
                     t = OS.Path.join(dataDir, "locate");
                     await this._Addon._Zotero.File.iterateDirectory(s, async function(entry) {
                         if (entry.name === 'engines.json') {
-                            let contentsBackup = this._Addon._Zotero.File.getContents(OS.Path.join(s, entry.name));
+                            let contentsBackup = await this._Addon._Zotero.File.getContentsAsync(OS.Path.join(s, entry.name));
                             let enginesBackup = JSON.parse(contentsBackup);
-                            let contents = this._Addon._Zotero.File.getContents(OS.Path.join(t, entry.name));
+                            let contents = await this._Addon._Zotero.File.getContentsAsync(OS.Path.join(t, entry.name));
                             let engines = JSON.parse(contents);
                             let allContents = enginesBackup.concat(engines);
-                            this._Addon._Zotero.File.putContents(
+                            await this._Addon._Zotero.File.putContentsAsync(
                                 this._Addon._Zotero.File.pathToFile(OS.Path.join(t, entry.name)),
                                 allContents
                             );
