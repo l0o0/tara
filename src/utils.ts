@@ -1,5 +1,7 @@
+import { zip } from "compressing";
 import { Addon } from "./addon";
 import AddonModule from "./module";
+import { FilePickerHelper } from "zotero-plugin-toolkit/dist/helpers/filePicker";
 
 Components.utils.import("resource://gre/modules/osfile.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
@@ -295,7 +297,7 @@ class Utils extends AddonModule {
 
     public async unzipToTemporaryDir(filename: string, tmpDir: string) {
         this._Addon._Zotero.debug(tmpDir);
-        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(tmpDir);
+        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(tmpDir, { unixMode: 0o777 });
         let zipFile = this._Addon._Zotero.File.pathToFile(filename);
         var zipReader = Components.classes[
             "@mozilla.org/libjar/zip-reader;1"
@@ -313,7 +315,7 @@ class Utils extends AddonModule {
         }
         folders.sort();// 对文件夹排序，避免缺失父目录造成的异常
         folders.forEach( async(e) => {await this._Addon._Zotero.File.createDirectoryIfMissingAsync(
-            e
+            e, { unixMode: 0o777 }
         );})
         // Extract files
         let entries = zipReader.findEntries("*");
@@ -340,11 +342,23 @@ class Utils extends AddonModule {
         // Import from an export backup zip
         await this.createBackupItem();
         let backupItemID = this._Addon._Zotero.Prefs.get("tara.itemID");
-        let zoteroPane = this._Addon._Zotero.getActiveZoteroPane();
-        await zoteroPane.addAttachmentFromDialog(false, backupItemID);
-        let attachmentID = this._Addon._Zotero.Items.get(backupItemID).getAttachments()[0];
-        let attachment = this._Addon._Zotero.Items.get(attachmentID);
-        this.restoreFromFile(attachment);
+        let zipfilename = await new FilePickerHelper(
+            this._Addon.locale.getString("import.title"),
+            "open",
+            [["Zip File(*.zip)", "*.zip"]]
+        ).open();
+        if (zipfilename) {
+            const importOptions = {
+                file: zipfilename,
+                title: OS.Path.basename(zipfilename),
+                parentItemID: backupItemID,
+            };
+            let attachmentID = await this._Addon._Zotero.Attachments.importFromFile(
+                importOptions
+            );
+            let attachment = this._Addon._Zotero.Items.get(attachmentID);
+            this.restoreFromFile(attachment);
+        }
     }
 
     public async restoreFromBackup() {
