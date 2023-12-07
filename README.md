@@ -1,5 +1,5 @@
 <div align="center">
-  <h1 align="center"><img class="center" src="./addon/chrome/skin/default/tara.png" alt="Icon">Tara</h1>
+  <h1 align="center"><img class="center" src="./addon/chrome/content/icons/tara.png" alt="Icon">Tara</h1>
 </div>
 
 # Tara(_Taraxacum_)蒲公英
