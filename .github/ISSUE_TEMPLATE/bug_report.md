@@ -27,6 +27,7 @@ Bug appears in (BUG 什么时候产生)
 **System Information 系统信息**
 - OS 操作系统：Win/Linux/Mac
 - Zotero Version 版本： Version 版本信息
+- Addon Version 插件版本号：
 
 
 **Screenshots 可提供截图**
