@@ -189,17 +189,14 @@ class AddonViews extends AddonModule {
         }
     }
 
-    public completeProgressWindow(isExport: boolean, msg: string = null) {
+    public completeProgressWindow(msg: string, status: boolean) {
         if (!this.progressWindow) return;
         let doc = this.progressWindow.document;
+        if (!status) doc.querySelector("#box")!.className = "blink_box";
         doc.querySelector("#progress").setAttribute("value", '100');
         doc.querySelector("#status").textContent = this._Addon.locale.getString("status.finish");
         doc.querySelector("#button1").textContent = 'OK';
-        if (isExport) {
-            doc.querySelector("#msg").textContent = OS.Path.join(this._Addon._Zotero.Prefs.get("dataDir"), 'Backup');
-        } else {
-            doc.querySelector("#msg").textContent = this._Addon.locale.getString(msg ? msg : "complete.msg");
-        }
+        doc.querySelector("#msg").textContent = msg;
     }
 
     public openSelectWindow(io: object) {

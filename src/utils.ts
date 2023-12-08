@@ -182,6 +182,7 @@ class Utils extends AddonModule {
         var s: string, t: string;
         const totalTasks: number = this._Addon.views.queue.length;
         this._Addon._Zotero.debug(`** Tara ${totalTasks}`);
+        let completeStatus = true;
         while (this._Addon.views.queue.length > 0) {
             let task = this._Addon.views.queue.shift();
             try {
@@ -257,15 +258,17 @@ class Utils extends AddonModule {
                 let pvalue = this.getProgress(this._Addon.views.queue.length, totalTasks)
                 this._Addon.views.updateProgressWindow(task, true, pvalue);
             } catch (e) {
+                completeStatus = false;
                 this._Addon.views.updateProgressWindow(task, false);
             }
         }
-        this._Addon.views.completeProgressWindow(isExport);
+        const msg = completeStatus ? OS.Path.join(this._Addon._Zotero.Prefs.get("dataDir"), 'Backup') : this._Addon.locale.getString("backup.error.msg");
+        this._Addon.views.completeProgressWindow(msg);
         this._Addon._Zotero.debug("Create backup zip complete");
     }
 
     public async createBackupAsAttachment() {
-        this._Addon._Zotero.debug("** Tara Tara start create Backup As Attachment");
+        this._Addon._Zotero.debug("** Tara start create Backup As Attachment");
 
         // Backup parts in a queue
         let queue = {
@@ -278,11 +281,11 @@ class Utils extends AddonModule {
         };
         this._Addon.views.queue = Object.keys(queue).filter((k) => queue[k]);
         await this.createBackupZIP();
-        this._Addon._Zotero.debug("** Tara Tara finish create Backup As Attachment");
+        this._Addon._Zotero.debug("** Tara finish create Backup As Attachment");
     }
 
     public async exportBackup() {
-        this._Addon._Zotero.debug("** Tara Tara start export backup");
+        this._Addon._Zotero.debug("** Tara start export backup");
         let queue = {
             preferences: this._Addon._Zotero.Prefs.get("tara.keepPrefs"),
             addons: this._Addon._Zotero.Prefs.get("tara.keepAddon"),
@@ -293,7 +296,7 @@ class Utils extends AddonModule {
         };
         this._Addon.views.queue = Object.keys(queue).filter((k) => queue[k]);
         await this.createBackupZIP(true);
-        this._Addon._Zotero.debug("** Tara Tara finish export backup");
+        this._Addon._Zotero.debug("** Tara finish export backup");
     }
 
     public async unzipToTemporaryDir(filename: string, tmpDir: string) {
@@ -383,7 +386,7 @@ class Utils extends AddonModule {
             this._Addon._Zotero.debug(io["items"]);
             this._Addon.views.openSelectWindow(io);
             await io.deferred.promise;
-            this._Addon._Zotero.debug("** Tara Tara select promise");
+            this._Addon._Zotero.debug("** Tara select promise");
             this._Addon._Zotero.debug(io["attachment"]);
             // No item selected
             if (!io["attachment"]) return;
@@ -414,6 +417,7 @@ class Utils extends AddonModule {
                     this._Addon._Zotero.Prefs.get("dataDir");
         const profileDir: string = this._Addon._Zotero.Profile.dir;
         await this._Addon.views.openProgressWindow(this._Addon.locale.getString("restore.header"));
+        let completeStatus = true;
         while (this._Addon.views.queue.length > 0) {
             let task = this._Addon.views.queue.shift();
             let s, t;
@@ -469,7 +473,7 @@ class Utils extends AddonModule {
                                 }
                             } else {
                                 this._Addon._Zotero.debug(
-                                    `** Tara Tara missing addon ${addon.path}`
+                                    `** Tara missing addon ${addon.path}`
                                 );
                             }
                         }
@@ -531,11 +535,13 @@ class Utils extends AddonModule {
                 if (task == 'unzip') { // 解压缩失败，后面就不需要执行了
                     this._Addon.views.queue = [];
                 }
+                completeStatus = false;
                 this._Addon._Zotero.debug(e);
                 this._Addon.views.updateProgressWindow(task, false);
             }
         }
-        this._Addon.views.completeProgressWindow(false, "restore.complete.msg");
+        const msg = completeStatus ? this._Addon.locale.getString("restore.success.msg") : this._Addon.locale.getString("restore.error.msg");
+        this._Addon.views.completeProgressWindow(msg, completeStatus);
     }
 }
 
