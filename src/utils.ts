@@ -2,6 +2,7 @@ import { zip } from "compressing";
 import { Addon } from "./addon";
 import AddonModule from "./module";
 import { FilePickerHelper } from "zotero-plugin-toolkit/dist/helpers/filePicker";
+import ZoteroToolkit from "zotero-plugin-toolkit";
 
 Components.utils.import("resource://gre/modules/osfile.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
@@ -407,6 +408,7 @@ class Utils extends AddonModule {
             preferences: this._Addon._Zotero.Prefs.get("tara.keepPrefs"),
         };
         this._Addon.views.queue = Object.keys(queue).filter((k) => queue[k]);
+        this._Addon._Zotero.debug(this._Addon.views.queue);
         const totalTasks = this._Addon.views.queue;
         const dataDir: string =
                     this._Addon._Zotero.Prefs.get("dataDir");
@@ -526,6 +528,9 @@ class Utils extends AddonModule {
                 let pvalue = this.getProgress(this._Addon.views.queue.length, totalTasks)
                 this._Addon.views.updateProgressWindow(task, true, pvalue);
             } catch (e) {
+                if (task == 'unzip') { // 解压缩失败，后面就不需要执行了
+                    this._Addon.views.queue = [];
+                }
                 this._Addon._Zotero.debug(e);
                 this._Addon.views.updateProgressWindow(task, false);
             }
