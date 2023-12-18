@@ -1,8 +1,6 @@
-import { zip } from "compressing";
 import { Addon } from "./addon";
 import AddonModule from "./module";
 import { FilePickerHelper } from "zotero-plugin-toolkit/dist/helpers/filePicker";
-import ZoteroToolkit from "zotero-plugin-toolkit";
 
 Components.utils.import("resource://gre/modules/osfile.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
@@ -103,7 +101,7 @@ class Utils extends AddonModule {
         let infos = extensionsInfo["addons"];
 
         infos = infos.filter(
-            (e) => e.type == "extension" && !wordPlugins.includes(e.id)
+            (e) => e.type == "extension" && wordPlugins.indexOf(e.id) == -1
         );
 
         let filteredInfos = infos.map(function (e) {
@@ -310,17 +308,12 @@ class Utils extends AddonModule {
 
         // ZIP 文件中目录后面是 /
         let folderEntries = zipReader.findEntries("*/$");
-        let folders = [];
         while (folderEntries.hasMore()) {
             let entry = folderEntries.getNext();
-            let folder = OS.Path.join(tmpDir, this._Addon._Zotero.isWin ? entry.replace(/\//g, "\\") : entry);
+            let folder = OS.Path.join(tmpDir, ...entry.split(/\//));
             this._Addon._Zotero.debug(folder);
-            folders.push(folder);
+            await this._Addon._Zotero.File.createDirectoryIfMissingAsync(folder, { from: tmpDir });
         }
-        folders.sort();// 对文件夹排序，避免缺失父目录造成的异常
-        folders.forEach( async(e) => {await this._Addon._Zotero.File.createDirectoryIfMissingAsync(
-            e, { unixMode: 0o777 }
-        );})
         // Extract files
         let entries = zipReader.findEntries("*");
         while (entries.hasMore()) {
@@ -330,13 +323,16 @@ class Utils extends AddonModule {
                 continue;
             }
             // 注意：Win 与 Mac， Linux下压缩文件中的分隔符不同
-            let destPath = OS.Path.join(tmpDir, ...entry.split(/[\/\\]/));
-            this._Addon._Zotero.debug(entry);
-            this._Addon._Zotero.debug(entry.split(/[\/\\]/));
+            let destPath = OS.Path.join(tmpDir, ...entry.split(/\//));
+            // this._Addon._Zotero.debug(entry);
+            // this._Addon._Zotero.debug(entry.split(/[\/\\]/));
             this._Addon._Zotero.debug(destPath);
+            let destPathFile = this._Addon._Zotero.File.pathToFile(destPath);
+            // Avoid ERROR: NS_ERROR_FILE_ACCESS_DENIED 
+            this._Addon._Zotero.debug(destPathFile.exists());
             zipReader.extract(
                 entry,
-                this._Addon._Zotero.File.pathToFile(destPath)
+                destPathFile
             );
         }
         zipReader.close();
