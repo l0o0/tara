@@ -132,7 +132,7 @@ export default class Progress {
   }
 
   async openWindow(html: string, chromeargs: string, io: any) {
-    ztoolkit.log(`open window ${io.header}`);
+    ztoolkit.log(`open window ${io.header || "默认"}`);
     const win = Services.wm.getMostRecentWindow("navigator:browser");
 
     if (win) {

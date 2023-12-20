@@ -1,6 +1,7 @@
 import { FilePickerHelper } from "zotero-plugin-toolkit/dist/helpers/filePicker";
 import { getString } from "../utils/locale";
 import { getPref } from "../utils/prefs";
+import { copyDir, pathjoin } from "../utils/tools";
 
 const { AddonManager } = ChromeUtils.import(
   "resource://gre/modules/AddonManager.jsm",
@@ -163,17 +164,15 @@ export async function createBackupFile(isExport = false) {
   );
   const saveDir = (isExport ? getPref("exportDir") : tmpDir) as string;
   // Remove existing backup data.
-  cacheTmp.append("Backup");
-  if (cacheTmp.exists()) {
-    cacheTmp.remove(true);
-  }
+  const suffix = "Backup" + Zotero.Utilities.randomString();
+  cacheTmp.append(suffix);
   cacheTmp.append(zipFilename);
   if (cacheTmp.exists()) {
     cacheTmp.remove(false);
   }
   // Create backup item
   await createBackupItem();
-  const outDir = PathUtils.join(tmpDir, "Backup");
+  const outDir = PathUtils.join(tmpDir, suffix);
   await Zotero.File.createDirectoryIfMissingAsync(outDir);
   const profileDir: string = Zotero.Profile.dir;
   const dataDir: string = Zotero.Prefs.get("dataDir") as string;
@@ -190,7 +189,7 @@ export async function createBackupFile(isExport = false) {
     try {
       switch (task) {
         case "keepPrefs": {
-          ztoolkit.log("** Tara preferences");
+          ztoolkit.log("Tara preferences");
           backupInfos = await getBackupInfos();
           const backupInfosText = JSON.stringify(backupInfos);
           // Save preference
@@ -315,40 +314,40 @@ export async function exportBackup() {
 
 export async function unzipToTemporaryDir(filename: string, tmpDir: string) {
   ztoolkit.log(tmpDir);
+  ztoolkit.log(filename);
+  // Windows 有时不生成临时目录
+  await Zotero.File.createDirectoryIfMissingAsync(PathUtils.parent(tmpDir)!);
   await Zotero.File.createDirectoryIfMissingAsync(tmpDir);
   const zipFile = Zotero.File.pathToFile(filename);
   const zipReader = Components.classes[
     "@mozilla.org/libjar/zip-reader;1"
   ].createInstance(Components.interfaces.nsIZipReader);
   zipReader.open(zipFile);
-
-  await Zotero.File.createDirectoryIfMissingAsync(
-    PathUtils.join(tmpDir, "translators"),
-  );
-  await Zotero.File.createDirectoryIfMissingAsync(
-    PathUtils.join(tmpDir, "extensions"),
-  );
-  await Zotero.File.createDirectoryIfMissingAsync(
-    PathUtils.join(tmpDir, "styles"),
-  );
-  await Zotero.File.createDirectoryIfMissingAsync(
-    PathUtils.join(tmpDir, "locate"),
-  );
-
   // Extract files
   const entries = zipReader.findEntries("*");
+  const subfolders = new Set<string>();
+  const entryFiles: any = {};
   while (entries.hasMore()) {
     const entry = entries.getNext();
-    if (entry.substr(-1) === "/" || entry.substr(-1) === "\\") {
+    const pathParts = entry.split(/[/\\]/);
+    if (pathParts.length > 1)
+      subfolders.add(pathjoin(tmpDir, pathParts.slice(0, -1)));
+    if (entry.endsWith("/") || entry.endsWith("\\")) {
       continue;
     }
-    const entryPath = entry.split(/[/\\]/);
-    // 二级目录
-    let destPath = PathUtils.join(tmpDir, entryPath[0]);
-    if (entryPath.length == 2)
-      destPath = PathUtils.join(destPath, entryPath[1]);
-    zipReader.extract(entry, Zotero.File.pathToFile(destPath));
+    entryFiles[entry] = pathjoin(tmpDir, pathParts);
   }
+  for (const e of subfolders) {
+    ztoolkit.log("Create subfolder: " + e);
+    await IOUtils.makeDirectory(e, { ignoreExisting: true });
+    ztoolkit.log(`${await IOUtils.exists(e)}`);
+  }
+
+  Object.keys(entryFiles).forEach((e) => {
+    ztoolkit.log(e, entryFiles[e]);
+    zipReader.extract(e, Zotero.File.pathToFile(entryFiles[e]));
+  });
+
   zipReader.close();
 }
 
@@ -400,10 +399,7 @@ export async function restoreFromBackup() {
 
 export async function restoreFromFile(filename: string) {
   const cacheTmp = Zotero.getTempDirectory();
-  cacheTmp.append("Backup");
-  if (cacheTmp.exists()) {
-    cacheTmp.remove(true);
-  }
+  cacheTmp.append("Backup" + Zotero.Utilities.randomString());
   const tmpDir = cacheTmp.path;
   addon.data.progress.queue = ["unzip"].concat(getQueue());
   addon.data.progress.totalTasks = addon.data.progress.queue.length;
@@ -431,6 +427,9 @@ export async function restoreFromFile(filename: string) {
           );
           for (const addon of backupPrefs.addons) {
             ztoolkit.log(`install addon ${addon.id} ${addon.userDisabled}`);
+
+            if (addon.id == "tara@linxzh.com" || !addon.id) continue;
+
             const addonFile =
               PathUtils.join(PathUtils.join(tmpDir, "extensions"), addon.id) +
               ".xpi";
@@ -467,14 +466,16 @@ export async function restoreFromFile(filename: string) {
           ztoolkit.log("restore CSLs");
           s = PathUtils.join(tmpDir, "styles");
           t = PathUtils.join(dataDir, "styles");
-          await Zotero.File.copyDirectory(s, t);
+          ztoolkit.log(s + " " + t);
+          await copyDir(s, t);
+          // await Zotero.File.copyDirectory(s, t);
           break;
         case "keepTranslators":
           ztoolkit.log("restore translators");
           s = PathUtils.join(tmpDir, "translators");
           t = PathUtils.join(dataDir, "translators");
           ztoolkit.log(`restore locate, ${s}, ${t}`);
-          await Zotero.File.copyDirectory(s, t);
+          await copyDir(s, t);
           break;
         case "keepLocate":
           ztoolkit.log("restore locate");
@@ -514,10 +515,13 @@ export async function restoreFromFile(filename: string) {
             (await Zotero.File.getContentsAsync(backupPrefsPath)) as string,
           );
           backupZoteroVersion = backupPrefs.ZoteroVersion;
-          const retest = new RegExp("dir|path|folder", "i")
+          const retest = new RegExp("dir|path|folder", "i");
           for (const pkey in backupPrefs.preferences) {
             // 过程个性化的目录设置，避免异常的设置值
-            if (retest.test(pkey) && (typeof backupPrefs.preferences[pkey] == 'string')) {
+            if (
+              retest.test(pkey) &&
+              typeof backupPrefs.preferences[pkey] == "string"
+            ) {
               ztoolkit.log(pkey);
               ztoolkit.log(backupPrefs.preferences[pkey]);
               let isExists = false;
