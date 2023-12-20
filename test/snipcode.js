@@ -38,3 +38,22 @@ while (entries.hasMore()) {
     console.log(destPath);
     zipReader.extract(entry, Zotero.File.pathToFile(destPath));
 }
+
+
+// 测试Windows10 Z7生成的压缩文件，在Win Z6下的解析
+// 在Win10系统上，手动创建 ZIP 文件，其路径格式 styles/hidden/，Zotero内置ZIP函数创建的路径分隔符为 \
+// Ubuntu Z6 Zotero File 内置的创建的路径 /，有目录
+filename = "C:\\Users\\E480\\Zotero\\storage\\HYX9FUMQ\\2023_12_19_15_45_46_backup.zip";
+tmpDir2 = "C:\\Users\\l0o0\\AppData\\Local\\Temp\\Zotero\\Backup";
+zipFile = Zotero.File.pathToFile(filename);
+zipReader = Components.classes[
+    "@mozilla.org/libjar/zip-reader;1"
+].createInstance(Components.interfaces.nsIZipReader);
+zipReader.open(zipFile);
+folderEntries = zipReader.findEntries("*/$");
+while (folderEntries.hasMore()) {
+    let entry = folderEntries.getNext();
+    Zotero.debug(entry);
+    const folder = entry.split(/\//).reduce((a, c) => PathUtils.join(a, c), tmpDir2);
+    Zotero.debug(folder);
+}
