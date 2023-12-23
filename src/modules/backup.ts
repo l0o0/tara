@@ -415,6 +415,7 @@ export async function restoreFromFile(filename: string) {
   let backupPrefs: any;
   let success = true;
   let backupZoteroVersion = "";
+  const retest = new RegExp("dir|path|folder", "i");
   while (addon.data.progress.queue.length > 0) {
     const task = addon.data.progress.queue.shift();
     let s: any, t: any;
@@ -514,7 +515,6 @@ export async function restoreFromFile(filename: string) {
             (await Zotero.File.getContentsAsync(backupPrefsPath)) as string,
           );
           backupZoteroVersion = backupPrefs.ZoteroVersion;
-          const retest = new RegExp("dir|path|folder", "i")
           for (const pkey in backupPrefs.preferences) {
             // 过程个性化的目录设置，避免异常的设置值
             if (retest.test(pkey) && (typeof backupPrefs.preferences[pkey] == 'string')) {
