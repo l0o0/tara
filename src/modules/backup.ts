@@ -1,7 +1,13 @@
 import { FilePickerHelper } from "zotero-plugin-toolkit/dist/helpers/filePicker";
 import { getString } from "../utils/locale";
 import { getPref } from "../utils/prefs";
-import { copyDir, pathjoin } from "../utils/tools";
+import {
+  copyDirectory,
+  pathjoin,
+  removeDirectory,
+  unzipToTemporaryDir,
+  zipDirectory,
+} from "../utils/tools";
 
 const { AddonManager } = ChromeUtils.import(
   "resource://gre/modules/AddonManager.jsm",
@@ -12,6 +18,28 @@ interface AddonInfo {
   userDisabled: boolean;
   version: string;
 }
+
+const DropPrefs: Array<string> = [
+  "extensions.zotero.dataDir",
+  "extensions.zotero.firstRun.skipFirefoxProfileAccessCheck",
+  "extensions.zotero.firstRun2",
+  "extensions.zotero.lastWebDAVOrphanPurge",
+  "extensions.zotero.prefVersion",
+  "extensions.zotero.scaffold.translatorsDir",
+  "extensions.zotero.sync.reminder.setUp.enabled",
+  "extensions.zotero.sync.reminder.setUp.lastDisplayed",
+  "extensions.zotero.sync.storage.verified",
+  "extensions.zotero.recentSaveTargets",
+  "extensions.zotero.lastViewedFolder", // Last viewd collection
+  "extensions.zotero.scaffold.translatorsDir",
+  "extensions.zotero.scaffold.eslint.enabled",
+  "extensions.zotero.tara.itemID",
+  "extensions.zotero.tara.exportDir",
+  "extensions.zotero.thirdPartyCache",
+  "extensions.zotero.zotero.asyncTemp",
+  "extensions.zoteroWinWordIntegration.installed",
+  "extensions.zoteroWinWordIntegration.version",
+];
 
 export function getQueue() {
   const qPrefs = [
@@ -33,29 +61,8 @@ export function getQueue() {
 
 export function getFilteredPrefs() {
   const prefs = getPrefInfos();
-  const dropPrefs: Array<string> = [
-    "extensions.zotero.dataDir",
-    "extensions.zotero.firstRun.skipFirefoxProfileAccessCheck",
-    "extensions.zotero.firstRun2",
-    "extensions.zotero.lastWebDAVOrphanPurge",
-    "extensions.zotero.prefVersion",
-    "extensions.zotero.scaffold.translatorsDir",
-    "extensions.zotero.sync.reminder.setUp.enabled",
-    "extensions.zotero.sync.reminder.setUp.lastDisplayed",
-    "extensions.zotero.sync.storage.verified",
-    "extensions.zotero.recentSaveTargets",
-    "extensions.zotero.lastViewedFolder", // Last viewd collection
-    "extensions.zotero.scaffold.translatorsDir",
-    "extensions.zotero.scaffold.eslint.enabled",
-    "extensions.zotero.tara.itemID",
-    "extensions.zotero.tara.exportDir",
-    "extensions.zotero.thirdPartyCache",
-    "extensions.zotero.zotero.asyncTemp",
-    "extensions.zoteroWinWordIntegration.installed",
-    "extensions.zoteroWinWordIntegration.version",
-  ];
   for (const p in prefs) {
-    if (dropPrefs.includes(p)) delete prefs[p];
+    if (DropPrefs.includes(p)) delete prefs[p];
   }
   return prefs;
 }
@@ -164,15 +171,17 @@ export async function createBackupFile(isExport = false) {
   );
   const saveDir = (isExport ? getPref("exportDir") : tmpDir) as string;
   // Remove existing backup data.
-  const suffix = "Backup" + Zotero.Utilities.randomString();
-  cacheTmp.append(suffix);
+  cacheTmp.append("Backup");
+  if (cacheTmp.exists()) {
+    removeDirectory(cacheTmp.path);
+  }
   cacheTmp.append(zipFilename);
   if (cacheTmp.exists()) {
     cacheTmp.remove(false);
   }
   // Create backup item
   await createBackupItem();
-  const outDir = PathUtils.join(tmpDir, suffix);
+  const outDir = PathUtils.join(tmpDir, "Backup");
   await Zotero.File.createDirectoryIfMissingAsync(outDir);
   const profileDir: string = Zotero.Profile.dir;
   const dataDir: string = Zotero.Prefs.get("dataDir") as string;
@@ -229,11 +238,7 @@ export async function createBackupFile(isExport = false) {
           ztoolkit.log("** Tara createZIP");
           ztoolkit.log(saveDir);
           ztoolkit.log(outDir);
-          await Zotero.File.zipDirectory(
-            outDir,
-            PathUtils.join(saveDir, zipFilename),
-            null,
-          );
+          await zipDirectory(outDir, PathUtils.join(saveDir, zipFilename));
           break;
         }
         case "importAttachment": {
@@ -254,10 +259,16 @@ export async function createBackupFile(isExport = false) {
           await Zotero.File.removeIfExists(
             PathUtils.join(getPref("exportDir") as string, "tara.xpi"),
           );
-          await Zotero.File.copyToUnique(
-            PathUtils.join(profileDir, "extensions", "tara@linxzh.com.xpi"),
-            PathUtils.join(getPref("exportDir") as string, "tara.xpi"),
-          );
+          if (
+            await IOUtils.exists(
+              pathjoin(profileDir, ["extensions", "tara@linxzh.com.xpi"]),
+            )
+          ) {
+            await Zotero.File.copyToUnique(
+              pathjoin(profileDir, ["extensions", "tara@linxzh.com.xpi"]),
+              PathUtils.join(getPref("exportDir") as string, "tara.xpi"),
+            );
+          }
           break;
       }
       addon.data.progress.updateProgressWindow(task, true);
@@ -312,45 +323,6 @@ export async function exportBackup() {
   ztoolkit.log("** Tara Tara finish export backup");
 }
 
-export async function unzipToTemporaryDir(filename: string, tmpDir: string) {
-  ztoolkit.log(tmpDir);
-  ztoolkit.log(filename);
-  // Windows 有时不生成临时目录
-  await Zotero.File.createDirectoryIfMissingAsync(PathUtils.parent(tmpDir)!);
-  await Zotero.File.createDirectoryIfMissingAsync(tmpDir);
-  const zipFile = Zotero.File.pathToFile(filename);
-  const zipReader = Components.classes[
-    "@mozilla.org/libjar/zip-reader;1"
-  ].createInstance(Components.interfaces.nsIZipReader);
-  zipReader.open(zipFile);
-  // Extract files
-  const entries = zipReader.findEntries("*");
-  const subfolders = new Set<string>();
-  const entryFiles: any = {};
-  while (entries.hasMore()) {
-    const entry = entries.getNext();
-    const pathParts = entry.split(/[/\\]/);
-    if (pathParts.length > 1)
-      subfolders.add(pathjoin(tmpDir, pathParts.slice(0, -1)));
-    if (entry.endsWith("/") || entry.endsWith("\\")) {
-      continue;
-    }
-    entryFiles[entry] = pathjoin(tmpDir, pathParts);
-  }
-  for (const e of subfolders) {
-    ztoolkit.log("Create subfolder: " + e);
-    await IOUtils.makeDirectory(e, { ignoreExisting: true });
-    ztoolkit.log(`${await IOUtils.exists(e)}`);
-  }
-
-  Object.keys(entryFiles).forEach((e) => {
-    ztoolkit.log(e, entryFiles[e]);
-    zipReader.extract(e, Zotero.File.pathToFile(entryFiles[e]));
-  });
-
-  zipReader.close();
-}
-
 export async function importFromBackup() {
   // Import from an export backup zip
   const filename = await new FilePickerHelper(
@@ -399,7 +371,10 @@ export async function restoreFromBackup() {
 
 export async function restoreFromFile(filename: string) {
   const cacheTmp = Zotero.getTempDirectory();
-  cacheTmp.append("Backup" + Zotero.Utilities.randomString());
+  cacheTmp.append("Backup");
+  if (cacheTmp.exists()) {
+    removeDirectory(cacheTmp.path);
+  }
   const tmpDir = cacheTmp.path;
   addon.data.progress.queue = ["unzip"].concat(getQueue());
   addon.data.progress.totalTasks = addon.data.progress.queue.length;
@@ -411,6 +386,7 @@ export async function restoreFromFile(filename: string) {
   let backupPrefs: any;
   let success = true;
   let backupZoteroVersion = "";
+  const retest = new RegExp("dir|path|folder", "i");
   while (addon.data.progress.queue.length > 0) {
     const task = addon.data.progress.queue.shift();
     let s: any, t: any;
@@ -466,58 +442,69 @@ export async function restoreFromFile(filename: string) {
           ztoolkit.log("restore CSLs");
           s = PathUtils.join(tmpDir, "styles");
           t = PathUtils.join(dataDir, "styles");
-          ztoolkit.log(s + " " + t);
-          await copyDir(s, t);
-          // await Zotero.File.copyDirectory(s, t);
+          if (await IOUtils.exists(s)) {
+            ztoolkit.log(s + " " + t);
+            await copyDirectory(s, t);
+          } else {
+            ztoolkit.log("missing source CSL folder");
+          }
           break;
         case "keepTranslators":
           ztoolkit.log("restore translators");
           s = PathUtils.join(tmpDir, "translators");
           t = PathUtils.join(dataDir, "translators");
-          ztoolkit.log(`restore locate, ${s}, ${t}`);
-          await copyDir(s, t);
+          if (await IOUtils.exists(s)) {
+            ztoolkit.log(`restore locate, ${s}, ${t}`);
+            await copyDirectory(s, t);
+          } else {
+            ztoolkit.log("missing source translators folder");
+          }
+
           break;
         case "keepLocate":
           ztoolkit.log("restore locate");
           s = PathUtils.join(tmpDir, "locate");
           t = PathUtils.join(dataDir, "locate");
-          await Zotero.File.iterateDirectory(s, async function (entry: any) {
-            if (entry.name === "engines.json") {
-              const contentsBackup = (await Zotero.File.getContentsAsync(
-                PathUtils.join(s, entry.name),
-              )) as string;
-              const enginesBackup = JSON.parse(contentsBackup);
-              const contents = (await Zotero.File.getContentsAsync(
-                PathUtils.join(t, entry.name),
-              )) as string;
-              const engines = JSON.parse(contents);
-              const engineNames = engines.map((e: any) => e._name);
-              enginesBackup.forEach((e: any) => {
-                if (!engineNames.includes(e._name)) {
-                  engines.push(e);
-                }
-              });
-              await Zotero.File.putContentsAsync(
-                Zotero.File.pathToFile(PathUtils.join(t, entry.name)),
-                JSON.stringify(engines),
-              );
-            } else {
-              await Zotero.File.copyToUnique(
-                PathUtils.join(s, entry.name),
-                PathUtils.join(t, entry.name),
-              );
-            }
-          });
+          if (await IOUtils.exists(s)) {
+            await Zotero.File.iterateDirectory(s, async function (entry: any) {
+              if (entry.name === "engines.json") {
+                const contentsBackup = (await Zotero.File.getContentsAsync(
+                  PathUtils.join(s, entry.name),
+                )) as string;
+                const enginesBackup = JSON.parse(contentsBackup);
+                const contents = (await Zotero.File.getContentsAsync(
+                  PathUtils.join(t, entry.name),
+                )) as string;
+                const engines = JSON.parse(contents);
+                const engineNames = engines.map((e: any) => e._name);
+                enginesBackup.forEach((e: any) => {
+                  if (!engineNames.includes(e._name)) {
+                    engines.push(e);
+                  }
+                });
+                await Zotero.File.putContentsAsync(
+                  Zotero.File.pathToFile(PathUtils.join(t, entry.name)),
+                  JSON.stringify(engines),
+                );
+              } else {
+                await Zotero.File.copyToUnique(
+                  PathUtils.join(s, entry.name),
+                  PathUtils.join(t, entry.name),
+                );
+              }
+            });
+          } else {
+            ztoolkit.log("missing source locate folder");
+          }
           break;
         case "keepPrefs":
           ztoolkit.log("restore preferences");
-          backupPrefs = JSON.parse(
-            (await Zotero.File.getContentsAsync(backupPrefsPath)) as string,
-          );
-          backupZoteroVersion = backupPrefs.ZoteroVersion;
-          const retest = new RegExp("dir|path|folder", "i");
+          backupPrefs = await IOUtils.readJSON(backupPrefsPath);
+          backupZoteroVersion = backupPrefs.ZoteroVersion || "6.xxxx";
           for (const pkey in backupPrefs.preferences) {
             // 过程个性化的目录设置，避免异常的设置值
+            if (DropPrefs.includes(pkey)) continue;
+
             if (
               retest.test(pkey) &&
               typeof backupPrefs.preferences[pkey] == "string"
