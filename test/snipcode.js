@@ -57,3 +57,14 @@ while (folderEntries.hasMore()) {
     const folder = entry.split(/\//).reduce((a, c) => PathUtils.join(a, c), tmpDir2);
     Zotero.debug(folder);
 }
+
+
+// 创建ZIP
+saveDir = "C:\\Users\\E480\\Downloads";
+outDir = "C:\\Users\\E480\\AppData\\Local\\Temp\\Zotero\\BackupyaotTFQT";
+zipFilename = 'test.zip';
+await Zotero.File.zipDirectory(
+    outDir,
+    PathUtils.join(saveDir, zipFilename),
+    null,
+);
