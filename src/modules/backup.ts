@@ -45,7 +45,7 @@ export function getQueue() {
   const qPrefs = [
     "keepPrefs",
     "keepAddons",
-    "keepCSLs",
+    "keepStyles",
     "keepTranslators",
     "keepLocate",
   ];
@@ -211,28 +211,18 @@ export async function createBackupFile(isExport = false) {
           break;
         }
         case "keepAddons":
-          ztoolkit.log("** Tara addons");
+          ztoolkit.log("** Tara task addons");
           s = PathUtils.join(profileDir, "extensions");
           t = PathUtils.join(outDir, "extensions");
           await Zotero.File.copyDirectory(s, t);
           break;
-        case "keepCSLs":
-          ztoolkit.log("** Tara styles");
-          s = PathUtils.join(dataDir, "styles");
-          t = PathUtils.join(outDir, "styles");
-          await Zotero.File.copyDirectory(s, t);
-          break;
+        case "keepStyles":
         case "keepTranslators":
-          ztoolkit.log("** Tara translators");
-          s = PathUtils.join(dataDir, "translators");
-          t = PathUtils.join(outDir, "translators");
-          await Zotero.File.copyDirectory(s, t);
-          break;
         case "keepLocate":
-          ztoolkit.log("** Tara locate");
-          s = PathUtils.join(dataDir, "locate");
-          t = PathUtils.join(outDir, "locate");
-          await Zotero.File.copyDirectory(s, t);
+          ztoolkit.log("Tara task " + task);
+          s = PathUtils.join(dataDir, task.substring(4).toLowerCase());
+          t = PathUtils.join(outDir, task.substring(4).toLowerCase());
+          if (await IOUtils.exists(s)) await Zotero.File.copyDirectory(s, t);
           break;
         case "createZIP": {
           ztoolkit.log("** Tara createZIP");
@@ -438,28 +428,17 @@ export async function restoreFromFile(filename: string) {
             }
           }
           break;
-        case "keepCSLs":
-          ztoolkit.log("restore CSLs");
-          s = PathUtils.join(tmpDir, "styles");
-          t = PathUtils.join(dataDir, "styles");
+        case "keepStyles":
+        case "keepTranslators":
+          ztoolkit.log("restore task " + task);
+          s = PathUtils.join(tmpDir, task.substring(4).toLowerCase());
+          t = PathUtils.join(dataDir, task.substring(4).toLowerCase());
           if (await IOUtils.exists(s)) {
             ztoolkit.log(s + " " + t);
             await copyDirectory(s, t);
           } else {
-            ztoolkit.log("missing source CSL folder");
+            ztoolkit.log("missing source folder: " + task);
           }
-          break;
-        case "keepTranslators":
-          ztoolkit.log("restore translators");
-          s = PathUtils.join(tmpDir, "translators");
-          t = PathUtils.join(dataDir, "translators");
-          if (await IOUtils.exists(s)) {
-            ztoolkit.log(`restore locate, ${s}, ${t}`);
-            await copyDirectory(s, t);
-          } else {
-            ztoolkit.log("missing source translators folder");
-          }
-
           break;
         case "keepLocate":
           ztoolkit.log("restore locate");

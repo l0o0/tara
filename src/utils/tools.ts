@@ -26,6 +26,9 @@ export async function copyDirectory(dira: string, dirb: string) {
   }
 }
 
+// Sometime folders have many files will return Error when using Zotero.File.remove or IOUtils.remove
+// So this code is to delete the files one by one, without casuing the error.
+// This happens in Windows, not found in Unix
 export function removeDirectory(dir: string | nsIFile) {
   if (typeof dir == "string") {
     dir = Zotero.File.pathToFile(dir);
@@ -69,7 +72,7 @@ export function zipDirectory(
       if (entry.path == zipPath) {
         ztoolkit.log(
           "skipping entry - will not add this entry to the zip file - as this is the zip itself: " +
-            zipPath,
+          zipPath,
         );
         continue;
       }
