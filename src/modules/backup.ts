@@ -9,6 +9,8 @@ import {
   zipDirectory,
 } from "../utils/tools";
 
+import { version } from "../../package.json";
+
 const { AddonManager } = ChromeUtils.import(
   "resource://gre/modules/AddonManager.jsm",
 );
@@ -19,6 +21,7 @@ interface AddonInfo {
   version: string;
 }
 
+// TODO: Add user customed preferences
 const DropPrefs: Array<string> = [
   "extensions.zotero.dataDir",
   "extensions.zotero.firstRun.skipFirefoxProfileAccessCheck",
@@ -59,14 +62,6 @@ export function getQueue() {
   return queue;
 }
 
-export function getFilteredPrefs() {
-  const prefs = getPrefInfos();
-  for (const p in prefs) {
-    if (DropPrefs.includes(p)) delete prefs[p];
-  }
-  return prefs;
-}
-
 export async function createBackupItem() {
   const itemID = getPref("itemID");
   if (itemID && Zotero.Items.get(itemID as number)) {
@@ -99,11 +94,18 @@ export async function readPrefsFromFile() {
 }
 
 // Only user modified prefs will be kept
-function getPrefInfos() {
+function getPrefInfos(filter = false) {
   const rootBranch = ztoolkit.getGlobal("Zotero").Prefs.rootBranch;
-  return rootBranch
+  let prefsKey: string[] = rootBranch
     .getChildList("extensions.")
     .filter((p: string) => rootBranch.prefHasUserValue(p));
+  if (filter) {
+    prefsKey = prefsKey.filter((p) => !DropPrefs.includes(p));
+  }
+  return prefsKey.reduce((a: any, c: string) => {
+    a[c] = Zotero.Prefs.get(c, true);
+    return a;
+  }, {});
 }
 
 export async function getAddonInfos() {
@@ -141,24 +143,33 @@ export async function getTranslatorInfos() {
 }
 
 export async function getBackupInfos() {
-  const addonInfos = await getAddonInfos();
-  const prefsInfos = getFilteredPrefs();
-  const cslInfos = getStyleInfos();
-  const tInfos = await getTranslatorInfos();
-  return {
+  const info: any = {
     createTime: new Date().toISOString(),
     ZoteroVersion: Zotero.version,
-    meta: {
-      prefNum: Object.keys(prefsInfos).length,
-      addonNum: addonInfos.length,
-      cslNum: Object.keys(cslInfos).length,
-      tNum: tInfos.length,
-    },
-    preferences: prefsInfos,
-    addons: addonInfos,
-    styles: cslInfos,
-    translators: tInfos,
+    taraVersion: version,
+    meta: {},
   };
+  if (getPref("keepAddons")) {
+    const addonInfos = await getAddonInfos();
+    info.meta.addonNum = addonInfos.length;
+    info.addons = addonInfos;
+  }
+  if (getPref("keepPrefs")) {
+    const prefsInfos = getPrefInfos(true);
+    info.meta.prefNum = Object.keys(prefsInfos).length;
+    info.preferences = prefsInfos;
+  }
+  if (getPref("keepStyles")) {
+    const cslInfos = getStyleInfos();
+    info.meta.cslNum = Object.keys(cslInfos).length;
+    info.styles = cslInfos;
+  }
+  if (getPref("keepTranslators")) {
+    const tInfos = await getTranslatorInfos();
+    info.meta.tNum = tInfos.length;
+    info.translators = tInfos;
+  }
+  return info;
 }
 
 export async function createBackupFile(isExport = false) {
@@ -200,14 +211,10 @@ export async function createBackupFile(isExport = false) {
         case "keepPrefs": {
           ztoolkit.log("Tara preferences");
           backupInfos = await getBackupInfos();
-          const backupInfosText = JSON.stringify(backupInfos);
           // Save preference
           const pf = PathUtils.join(outDir, "backup.json");
           ztoolkit.log(pf);
-          await Zotero.File.putContentsAsync(
-            Zotero.File.pathToFile(pf),
-            backupInfosText,
-          );
+          await IOUtils.writeJSON(pf, backupInfos);
           break;
         }
         case "keepAddons":
@@ -388,9 +395,7 @@ export async function restoreFromFile(filename: string) {
           break;
         case "keepAddons":
           ztoolkit.log("restore addons");
-          backupPrefs = JSON.parse(
-            (await Zotero.File.getContentsAsync(backupPrefsPath)) as string,
-          );
+          backupPrefs = await IOUtils.readJSON(backupPrefsPath);
           for (const addon of backupPrefs.addons) {
             ztoolkit.log(`install addon ${addon.id} ${addon.userDisabled}`);
 
@@ -447,24 +452,19 @@ export async function restoreFromFile(filename: string) {
           if (await IOUtils.exists(s)) {
             await Zotero.File.iterateDirectory(s, async function (entry: any) {
               if (entry.name === "engines.json") {
-                const contentsBackup = (await Zotero.File.getContentsAsync(
+                const enginesBackup = await IOUtils.readJSON(
                   PathUtils.join(s, entry.name),
-                )) as string;
-                const enginesBackup = JSON.parse(contentsBackup);
-                const contents = (await Zotero.File.getContentsAsync(
+                );
+                const engines = await IOUtils.readJSON(
                   PathUtils.join(t, entry.name),
-                )) as string;
-                const engines = JSON.parse(contents);
+                );
                 const engineNames = engines.map((e: any) => e._name);
                 enginesBackup.forEach((e: any) => {
                   if (!engineNames.includes(e._name)) {
                     engines.push(e);
                   }
                 });
-                await Zotero.File.putContentsAsync(
-                  Zotero.File.pathToFile(PathUtils.join(t, entry.name)),
-                  JSON.stringify(engines),
-                );
+                await IOUtils.writeJSON(PathUtils.join(t, entry.name), engines);
               } else {
                 await Zotero.File.copyToUnique(
                   PathUtils.join(s, entry.name),
@@ -528,7 +528,7 @@ export async function restoreFromFile(filename: string) {
     success,
     success ? getString("restore-success") : getString("restore-fail"),
     success
-      ? getString("restore-success-msg") + caution
+      ? getString("restore-success-msg") + "<br />" + caution
       : getString("restore-fail-msg"),
   );
 }

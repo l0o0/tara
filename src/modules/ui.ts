@@ -198,7 +198,7 @@ export default class Progress {
     if (!status) doc.querySelector("#box")!.className = "blink_box";
     doc.querySelector("#progress")!.setAttribute("value", "100");
     doc.querySelector("#button1")!.textContent = "OK";
-    doc.querySelector("#msg")!.textContent = footerMsg;
+    doc.querySelector("#msg")!.innerHTML = footerMsg;
     doc.querySelector("#status")!.textContent = statusMsg;
   }
 
