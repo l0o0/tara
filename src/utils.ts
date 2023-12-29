@@ -1,5 +1,6 @@
 import { Addon } from "./addon";
 import AddonModule from "./module";
+import { FilePickerHelper } from "zotero-plugin-toolkit/dist/helpers/filePicker";
 
 Components.utils.import("resource://gre/modules/osfile.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
@@ -106,7 +107,7 @@ class Utils extends AddonModule {
             this._Addon._Zotero.Profile.dir,
             "extensions.json"
         );
-        let extensionsContents = this._Addon._Zotero.File.getContents(
+        let extensionsContents = await this._Addon._Zotero.File.getContentsAsync(
             this._Addon._Zotero.File.pathToFile(extensions)
         );
         let extensionsInfo = JSON.parse(extensionsContents);
@@ -199,6 +200,7 @@ class Utils extends AddonModule {
         var s: string, t: string;
         const totalTasks: number = this._Addon.views.queue.length;
         this._Addon._Zotero.debug(`** Tara ${totalTasks}`);
+        let completeStatus = true;
         while (this._Addon.views.queue.length > 0) {
             let task = this._Addon.views.queue.shift();
             try {
@@ -283,10 +285,12 @@ class Utils extends AddonModule {
                 this._Addon.views.updateProgressWindow(task, true, pvalue);
             } catch (e) {
                 this._Addon._Zotero.debug(e);
+                completeStatus = false;
                 this._Addon.views.updateProgressWindow(task, false);
             }
         }
-        this._Addon.views.completeProgressWindow(isExport);
+        const msg = completeStatus ? OS.Path.join(this._Addon._Zotero.Prefs.get("dataDir"), 'Backup') : this._Addon.locale.getString("backup.error.msg");
+        this._Addon.views.completeProgressWindow(msg);
         this._Addon._Zotero.debug("Create backup zip complete");
     }
 
@@ -312,7 +316,7 @@ class Utils extends AddonModule {
     }
 
     public async exportBackup() {
-        this._Addon._Zotero.debug("** Tara Tara start export backup");
+        this._Addon._Zotero.debug("** Tara start export backup");
         let queue = {
             preferences: this._Addon._Zotero.Prefs.get("tara.keepPrefs"),
             addons: this._Addon._Zotero.Prefs.get("tara.keepAddon"),
@@ -323,42 +327,45 @@ class Utils extends AddonModule {
         };
         this._Addon.views.queue = Object.keys(queue).filter((k) => queue[k]);
         await this.createBackupZIP(true);
-        this._Addon._Zotero.debug("** Tara Tara finish export backup");
+        this._Addon._Zotero.debug("** Tara finish export backup");
     }
 
     public async unzipToTemporaryDir(filename: string, tmpDir: string) {
         this._Addon._Zotero.debug(tmpDir);
-        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(tmpDir);
+        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(tmpDir, { unixMode: 0o777 });
         let zipFile = this._Addon._Zotero.File.pathToFile(filename);
         var zipReader = Components.classes[
             "@mozilla.org/libjar/zip-reader;1"
         ].createInstance(Components.interfaces.nsIZipReader);
         zipReader.open(zipFile);
 
-        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(
-            OS.Path.join(tmpDir, "translators")
-        );
-        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(
-            OS.Path.join(tmpDir, "extensions")
-        );
-        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(
-            OS.Path.join(tmpDir, "styles")
-        );
-        await this._Addon._Zotero.File.createDirectoryIfMissingAsync(
-            OS.Path.join(tmpDir, "locate")
-        );
-
+        // ZIP 文件中目录后面是 /
+        let folderEntries = zipReader.findEntries("*/$");
+        while (folderEntries.hasMore()) {
+            let entry = folderEntries.getNext();
+            let folder = OS.Path.join(tmpDir, ...entry.split(/\//));
+            this._Addon._Zotero.debug(folder);
+            await this._Addon._Zotero.File.createDirectoryIfMissingAsync(folder, { from: tmpDir });
+        }
         // Extract files
         let entries = zipReader.findEntries("*");
         while (entries.hasMore()) {
             let entry = entries.getNext();
-            if (entry.substr(-1) === "/") {
+            if (entry.endsWith("\/")) {
+                this._Addon._Zotero.debug("Pass folder: " + entry);
                 continue;
             }
+            // 注意：Win 与 Mac， Linux下压缩文件中的分隔符不同
             let destPath = OS.Path.join(tmpDir, ...entry.split(/\//));
+            // this._Addon._Zotero.debug(entry);
+            // this._Addon._Zotero.debug(entry.split(/[\/\\]/));
+            this._Addon._Zotero.debug(destPath);
+            let destPathFile = this._Addon._Zotero.File.pathToFile(destPath);
+            // Avoid ERROR: NS_ERROR_FILE_ACCESS_DENIED 
+            this._Addon._Zotero.debug(destPathFile.exists());
             zipReader.extract(
                 entry,
-                this._Addon._Zotero.File.pathToFile(destPath)
+                destPathFile
             );
         }
         zipReader.close();
@@ -366,19 +373,29 @@ class Utils extends AddonModule {
 
     public async importFromBackup() {
         // Import from an export backup zip
-        if (!this._Addon._Zotero.Prefs.get("tara.itemID")) {
-            await this.createBackupItem();
-        }
+        await this.createBackupItem();
         let backupItemID = this._Addon._Zotero.Prefs.get("tara.itemID");
-        let zoteroPane = this._Addon._Zotero.getActiveZoteroPane();
-        await zoteroPane.addAttachmentFromDialog(false, backupItemID);
-        let attachmentID =
-            this._Addon._Zotero.Items.get(backupItemID).getAttachments()[0];
-        let attachment = this._Addon._Zotero.Items.get(attachmentID);
-        this.restoreFromFile(attachment);
+        let zipfilename = await new FilePickerHelper(
+            this._Addon.locale.getString("import.title"),
+            "open",
+            [["Zip File(*.zip)", "*.zip"]]
+        ).open();
+        if (zipfilename) {
+            const importOptions = {
+                file: zipfilename,
+                title: OS.Path.basename(zipfilename),
+                parentItemID: backupItemID,
+            };
+            let attachmentID = await this._Addon._Zotero.Attachments.importFromFile(
+                importOptions
+            );
+            let attachment = this._Addon._Zotero.Items.get(attachmentID);
+            this.restoreFromFile(attachment);
+        }
     }
 
     public async restoreFromBackup() {
+        await this.createBackupItem();
         let backupItemID = this._Addon._Zotero.Prefs.get("tara.itemID");
         var io = {
             title: this._Addon.locale.getString("select.title"),
@@ -402,7 +419,7 @@ class Utils extends AddonModule {
             this._Addon._Zotero.debug(io["items"]);
             this._Addon.views.openSelectWindow(io);
             await io.deferred.promise;
-            this._Addon._Zotero.debug("** Tara Tara select promise");
+            this._Addon._Zotero.debug("** Tara select promise");
             this._Addon._Zotero.debug(io["attachment"]);
             // No item selected
             if (!io["attachment"]) return;
@@ -427,12 +444,14 @@ class Utils extends AddonModule {
             preferences: this._Addon._Zotero.Prefs.get("tara.keepPrefs"),
         };
         this._Addon.views.queue = Object.keys(queue).filter((k) => queue[k]);
+        this._Addon._Zotero.debug(this._Addon.views.queue);
         const totalTasks = this._Addon.views.queue;
         const dataDir: string = this._Addon._Zotero.Prefs.get("dataDir");
         const profileDir: string = this._Addon._Zotero.Profile.dir;
         await this._Addon.views.openProgressWindow(
             this._Addon.locale.getString("restore.header")
         );
+        let completeStatus = true;
         while (this._Addon.views.queue.length > 0) {
             let task = this._Addon.views.queue.shift();
             let s, t;
@@ -445,17 +464,17 @@ class Utils extends AddonModule {
                 } else if (task == "addons") {
                     const backupPrefsPath = OS.Path.join(tmpDir, "backup.json");
                     const backupPrefs = JSON.parse(
-                        this._Addon._Zotero.File.getContents(backupPrefsPath)
+                       await this._Addon._Zotero.File.getContentsAsync(backupPrefsPath)
                     );
                     for (let addon of backupPrefs.addons) {
                         this._Addon._Zotero.debug(
-                            `** Tara Tara install addon ${addon.path}`
+                            `** Tara install addon ${addon.path}`
                         );
                         if (addon.path.endsWith(".xpi")) {
                             let xpi = OS.Path.join(
                                 tmpDir,
                                 "extensions",
-                                OS.Path.basename(addon.path)
+                                addon.id + ".xpi"
                             );
                             const xpiFile =
                                 this._Addon._Zotero.File.pathToFile(xpi);
@@ -559,15 +578,18 @@ class Utils extends AddonModule {
                 } else if (task == "preferences") {
                     const backupPrefsPath = OS.Path.join(tmpDir, "backup.json");
                     const backupPrefs = JSON.parse(
-                        this._Addon._Zotero.File.getContents(backupPrefsPath)
+                        await this._Addon._Zotero.File.getContentsAsync(backupPrefsPath)
                     );
+                    const retest = new RegExp("dir|path|folder", "i")
                     for (let pkey in backupPrefs.preferences) {
-                        if (pkey.search(/dir|path|folder/i)) {
+                        // 过滤非字符配置，导致文件判断异常
+                        if (retest.test(pkey) && (typeof backupPrefs.preferences[pkey] == 'string')) {
                             let isExists = await OS.File.exists(
                                 backupPrefs.preferences[pkey]
                             );
                             if (!isExists) continue;
                         }
+                        this._Addon._Zotero.debug("set " + pkey + " " + backupPrefs.preferences[pkey]);
                         this._Addon._Zotero.Prefs.set(
                             pkey,
                             backupPrefs.preferences[pkey],
@@ -581,11 +603,16 @@ class Utils extends AddonModule {
                 );
                 this._Addon.views.updateProgressWindow(task, true, pvalue);
             } catch (e) {
+                if (task == 'unzip') { // 解压缩失败，后面就不需要执行了
+                    this._Addon.views.queue = [];
+                }
+                completeStatus = false;
                 this._Addon._Zotero.debug(e);
                 this._Addon.views.updateProgressWindow(task, false);
             }
         }
-        this._Addon.views.completeProgressWindow(false, "restore.complete.msg");
+        const msg = completeStatus ? this._Addon.locale.getString("restore.success.msg") : this._Addon.locale.getString("restore.error.msg");
+        this._Addon.views.completeProgressWindow(msg, completeStatus);
     }
 }
 

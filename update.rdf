@@ -5,13 +5,13 @@
       <rdf:Seq>
         <rdf:li>
           <rdf:Description>
-            <em:version>0.0.3</em:version>
+            <em:version>0.0.6</em:version>
             <em:targetApplication>
               <rdf:Description>
                 <em:id>zotero@chnm.gmu.edu</em:id>
                 <em:minVersion>5.0</em:minVersion>
                 <em:maxVersion>*</em:maxVersion>
-                <em:updateLink>https://github.com/windingwind/tara/releases/latest/download/tara.xpi</em:updateLink>
+                <em:updateLink>https://github.com/l0o0/tara/releases/latest/download/tara.xpi</em:updateLink>
               </rdf:Description>
             </em:targetApplication>
             <em:targetApplication>
@@ -19,7 +19,7 @@
                 <em:id>juris-m@juris-m.github.io</em:id>
                 <em:minVersion>5.0</em:minVersion>
                 <em:maxVersion>*</em:maxVersion>
-                <em:updateLink>https://github.com/windingwind/tara/releases/latest/download/tara.xpi</em:updateLink>
+                <em:updateLink>https://github.com/l0o0/tara/releases/latest/download/tara.xpi</em:updateLink>
               </rdf:Description>
             </em:targetApplication>
           </rdf:Description>

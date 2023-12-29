@@ -1,6 +1,5 @@
 import { Addon } from "./addon";
 import AddonModule from "./module";
-const { addonRef } = require("../package.json");
 
 class AddonViews extends AddonModule {
     // You can store some element in the object attributes
@@ -121,7 +120,7 @@ class AddonViews extends AddonModule {
             this.progressWindow = win.openDialog(
                 "chrome://tara/content/progress.html",
                 "",
-                "chrome,close=yes,dependent,dialog,centerscreen,height=280,width=380",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=300,width=380",
                 {header: header}
             );
         } else {
@@ -129,7 +128,7 @@ class AddonViews extends AddonModule {
                 null,
                 "chrome://tara/content/progress.html",
                 "",
-                "chrome,close=yes,dependent,dialog,centerscreen,height=280,width=380",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=300,width=380",
                 {header: header}
             );
         }
@@ -189,16 +188,14 @@ class AddonViews extends AddonModule {
         }
     }
 
-    public completeProgressWindow(isExport: boolean, msg: string = null) {
+    public completeProgressWindow(msg: string, status: boolean) {
         if (!this.progressWindow) return;
         let doc = this.progressWindow.document;
+        if (!status) doc.querySelector("#box")!.className = "blink_box";
         doc.querySelector("#progress").setAttribute("value", '100');
+        doc.querySelector("#status").textContent = this._Addon.locale.getString("status.finish");
         doc.querySelector("#button1").textContent = 'OK';
-        if (isExport) {
-            doc.querySelector("#msg").textContent = OS.Path.join(this._Addon._Zotero.Prefs.get("dataDir"), 'Backup');
-        } else {
-            doc.querySelector("#msg").textContent = this._Addon.locale.getString(msg ? msg : "complete.msg");
-        }
+        doc.querySelector("#msg").textContent = msg;
     }
 
     public openSelectWindow(io: object) {
@@ -210,7 +207,7 @@ class AddonViews extends AddonModule {
             selectWindow = win.openDialog(
                 "chrome://tara/content/select.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=300,width=410",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=310,width=410",
                 io
             );
         } else {
@@ -218,7 +215,7 @@ class AddonViews extends AddonModule {
                 null,
                 "chrome://tara/content/select.html",
                 "",
-                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=300,width=410",
+                "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=310,width=410",
                 io
             );
         }
