@@ -14,14 +14,16 @@ export function pathjoin(dira: string, dirb: string | string[]): string {
 
 export async function copyDirectory(dira: string, dirb: string) {
   for (const f of await IOUtils.getChildren(dira)) {
-    ztoolkit.log(f);
     const destPath = PathUtils.join(dirb, PathUtils.filename(f));
-    ztoolkit.log(destPath);
+    ztoolkit.log(f + " -> " + destPath);
     const destPathFile = ztoolkit.getGlobal("Zotero").File.pathToFile(destPath);
     if (destPathFile.exists()) {
       destPathFile.permissions = 438;
       destPathFile.remove(false);
     }
+    // Can use a recursive way to copy
+    const sourceFile = ztoolkit.getGlobal("Zotero").File.pathToFile(f);
+    if (sourceFile.isDirectory()) continue;
     await IOUtils.copy(f, destPath);
   }
 }
