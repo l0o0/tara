@@ -1,10 +1,9 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
-
+title: ""
+labels: ""
+assignees: ""
 ---
 
 请建议按照下面的格式汇报BUG
@@ -25,10 +24,10 @@ Bug appears in (BUG 什么时候产生)
 - [ ] Restore Backup 恢复备份
 
 **System Information 系统信息**
+
 - OS 操作系统：Win/Linux/Mac
 - Zotero Version 版本： Version 版本信息
 - Addon Version 插件版本号：
-
 
 **Screenshots 可提供截图**
 If applicable, add screenshots to help explain your problem.
