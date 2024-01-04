@@ -40,7 +40,8 @@ export function removeDirectory(dir: string | nsIFile) {
     const entry = dirEntries
       .getNext()
       .QueryInterface(Components.interfaces.nsIFile);
-    if (entry.exists()) entry.permissions = 438;
+    ztoolkit.log("try to remove folder: " + entry.path);
+    if (entry.exists()) entry.permissions = 511;
     if (entry.isDirectory()) {
       removeDirectory(entry);
     } else {
