@@ -29,7 +29,7 @@ config.updateURL = isPreRelease ? config.updateBetaJSON : config.updateJSON;
 
 const updateJSONFile = isPreRelease ? "update-beta.json" : "update.json";
 const updateLink = isPreRelease
-  ? `${config.releasePage}/download/v${version}/${name}.xpi`
+  ? `${config.releasePage}/download/${version}/${name}.xpi`
   : `${config.releasePage}/latest/download/${name}.xpi`;
 
 function copyFileSync(source, target) {
