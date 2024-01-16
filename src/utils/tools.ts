@@ -75,7 +75,7 @@ export function zipDirectory(
       if (entry.path == zipPath) {
         ztoolkit.log(
           "skipping entry - will not add this entry to the zip file - as this is the zip itself: " +
-            zipPath,
+          zipPath,
         );
         continue;
       }
@@ -144,8 +144,8 @@ export function zipDirectory(
 export async function unzipToTemporaryDir(filename: string, tmpDir: string) {
   ztoolkit.log(tmpDir, filename);
   // Windows 有时不生成临时目录
-  await Zotero.File.createDirectoryIfMissingAsync(PathUtils.parent(tmpDir)!);
-  await Zotero.File.createDirectoryIfMissingAsync(tmpDir);
+  await IOUtils.makeDirectory(PathUtils.parent(tmpDir)!);
+  await IOUtils.makeDirectory(tmpDir);
   const zipFile = Zotero.File.pathToFile(filename);
   const zipReader = Components.classes[
     "@mozilla.org/libjar/zip-reader;1"
