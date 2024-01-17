@@ -113,6 +113,7 @@ export async function getAddonInfos() {
   const wordPluginIDs = [
     "ZoteroOpenOfficeIntegration@Zotero.org",
     "ZoteroWinWordIntegration@Zotero.org",
+    "tara@linxzh.com"
   ];
   const addoninfos: Array<AddonInfo> = [];
   for (const addon of await AddonManager.getAllAddons()) {
@@ -206,11 +207,10 @@ export async function createBackupFile(isExport = false) {
   while (addon.data.progress.queue.length > 0) {
     const task = addon.data.progress.queue?.shift();
     ztoolkit.log(task);
-    ztoolkit.log(addon.data.progress.queue);
+    // ztoolkit.log(addon.data.progress.queue);
     try {
       switch (task) {
         case "keepPrefs": {
-          ztoolkit.log("Tara preferences");
           backupInfos = await getBackupInfos();
           // Save preference
           const pf = PathUtils.join(outDir, "backup.json");
@@ -219,28 +219,23 @@ export async function createBackupFile(isExport = false) {
           break;
         }
         case "keepAddons":
-          ztoolkit.log("** Tara task addons");
           s = PathUtils.join(profileDir, "extensions");
-          t = PathUtils.join(outDir, "extensions");
-          await IOUtils.copy(s, t);
+          await IOUtils.copy(s, outDir, { recursive: true })
           break;
         case "keepStyles":
         case "keepTranslators":
         case "keepLocate":
-          ztoolkit.log("Tara task " + task);
           s = PathUtils.join(dataDir, task.substring(4).toLowerCase());
           t = PathUtils.join(outDir, task.substring(4).toLowerCase());
-          if (await IOUtils.exists(s)) await IOUtils.copy(s, t);
+          if (await IOUtils.exists(s)) await IOUtils.copy(s, t, { recursive: true });
           break;
         case "createZIP": {
-          ztoolkit.log("** Tara createZIP");
           ztoolkit.log(saveDir);
           ztoolkit.log(outDir);
           await zipDirectory(outDir, PathUtils.join(saveDir, zipFilename));
           break;
         }
         case "importAttachment": {
-          ztoolkit.log("** Tara importAttachment");
           const zipfile = PathUtils.join(saveDir, zipFilename);
           const item = Zotero.Items.get(getPref("itemID") as number);
           const timeString = new Date().toLocaleString();
@@ -253,7 +248,6 @@ export async function createBackupFile(isExport = false) {
           break;
         }
         case "keepTaraXPI":
-          ztoolkit.log("** Tara keepTaraXPI");
           await IOUtils.remove(
             PathUtils.join(getPref("exportDir") as string, "tara.xpi"),
           );
@@ -269,7 +263,10 @@ export async function createBackupFile(isExport = false) {
           }
           break;
       }
+      ztoolkit.log("complete task " + task);
+
       addon.data.progress.updateProgressWindow(task, true);
+
     } catch (e) {
       ztoolkit.log(e);
       success = false;
