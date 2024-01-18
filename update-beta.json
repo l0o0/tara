@@ -3,15 +3,6 @@
     "tara@linxzh.com": {
       "updates": [
         {
-          "version": "v0.0.6",
-          "update_link": "https://github.com/l0o0/tara/releases/download/v0.0.6/tara-0.0.6.xpi",
-          "applications": {
-            "gecko": {
-              "strict_min_version": "60.0"
-            }
-          }
-        },
-        {
           "version": "1.0.0-7",
           "update_link": "https://github.com/l0o0/tara/releases/download/1.0.0-7/tara.xpi",
           "applications": {
