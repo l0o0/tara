@@ -3,8 +3,8 @@
     "tara@linxzh.com": {
       "updates": [
         {
-          "version": "1.0.0-8",
-          "update_link": "https://github.com/l0o0/tara/releases/download/1.0.0-8/tara.xpi",
+          "version": "1.0.0-9",
+          "update_link": "https://github.com/l0o0/tara/releases/download/1.0.0-9/tara.xpi",
           "applications": {
             "zotero": {
               "strict_min_version": "6.999"
