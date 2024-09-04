@@ -3,3 +3,5 @@ node_modules
 package-lock.json
 zotero-cmd.json
 .DS_Store
+.env
+pnpm-lock.yaml
