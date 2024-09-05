@@ -2,15 +2,15 @@ import { config } from "../../package.json";
 import { getString } from "../utils/locale";
 
 export class BasicExampleFactory {
-  static exampleNotifierCallback() {
-    new ztoolkit.ProgressWindow(config.addonName)
-      .createLine({
-        text: "Open Tab Detected!",
-        type: "success",
-        progress: 100,
-      })
-      .show();
-  }
+  // static exampleNotifierCallback() {
+  //   new ztoolkit.ProgressWindow(config.addonName)
+  //     .createLine({
+  //       text: "Open Tab Detected!",
+  //       type: "success",
+  //       progress: 100,
+  //     })
+  //     .show();
+  // }
 
   static registerPrefs() {
     const prefOptions = {
