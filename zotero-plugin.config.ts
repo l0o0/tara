@@ -34,6 +34,11 @@ export default defineConfig({
       },
     ],
   },
+  release: {
+    github: {
+      enable: "local",
+    },
+  },
 
   // If you need to see a more detailed log, uncomment the following line:
   // logLevel: "trace",

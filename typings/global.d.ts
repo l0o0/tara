@@ -22,3 +22,17 @@ declare const addon: import("../src/addon").default;
 declare const __env__: "production" | "development";
 
 declare class Localization {}
+
+// Re-declare the _ZoteroTypes namespace and add the missing definition
+declare namespace _ZoteroTypes {
+  interface Prefs {
+    /**
+     * The root branch for preferences
+     */
+    rootBranch: rootBranch;
+  }
+}
+declare interface rootBranch {
+  prefHasUserValue(pref: string): boolean;
+  getChildList(branch: string): string[];
+}
