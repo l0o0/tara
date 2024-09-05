@@ -79,9 +79,9 @@ export async function createBackupItem() {
     const item = new Zotero.Item("document");
     item.setField("title", "Tara_Backup");
     const itemID = (await item.saveTx()) as number;
-    setPref("itemID", itemIDs[0]);
+    setPref("itemID", itemID);
   }
-  ztoolkit.log(`found backup itemid: ${getPref("itemID")}`)
+  ztoolkit.log(`found backup itemid: ${getPref("itemID")}`);
 }
 
 export function getPrefsPath(): string {
@@ -96,7 +96,8 @@ export async function readPrefsFromFile() {
 
 // Only user modified prefs will be kept
 function getPrefInfos(filter = false) {
-  const rootBranch = ztoolkit.getGlobal("Zotero").Prefs.rootBranch;
+  const rootBranch = ztoolkit.getGlobal("Zotero").Prefs
+    .rootBranch as rootBranch;
   let prefsKey: string[] = rootBranch
     .getChildList("extensions.")
     .filter((p: string) => rootBranch.prefHasUserValue(p));
@@ -113,7 +114,7 @@ export async function getAddonInfos() {
   const wordPluginIDs = [
     "ZoteroOpenOfficeIntegration@Zotero.org",
     "ZoteroWinWordIntegration@Zotero.org",
-    "tara@linxzh.com"
+    "tara@linxzh.com",
   ];
   const addoninfos: Array<AddonInfo> = [];
   for (const addon of await AddonManager.getAllAddons()) {
@@ -220,14 +221,15 @@ export async function createBackupFile(isExport = false) {
         }
         case "keepAddons":
           s = PathUtils.join(profileDir, "extensions");
-          await IOUtils.copy(s, outDir, { recursive: true })
+          await IOUtils.copy(s, outDir, { recursive: true });
           break;
         case "keepStyles":
         case "keepTranslators":
         case "keepLocate":
           s = PathUtils.join(dataDir, task.substring(4).toLowerCase());
           t = PathUtils.join(outDir, task.substring(4).toLowerCase());
-          if (await IOUtils.exists(s)) await IOUtils.copy(s, t, { recursive: true });
+          if (await IOUtils.exists(s))
+            await IOUtils.copy(s, t, { recursive: true });
           break;
         case "createZIP": {
           ztoolkit.log(saveDir);
@@ -265,12 +267,11 @@ export async function createBackupFile(isExport = false) {
       }
       ztoolkit.log("complete task " + task);
 
-      addon.data.progress.updateProgressWindow(task, true);
-
+      addon.data.progress.updateProgressWindow(getString(task), true);
     } catch (e) {
       ztoolkit.log(e);
       success = false;
-      addon.data.progress.updateProgressWindow(task, false);
+      addon.data.progress.updateProgressWindow(getString(task), false);
       addon.data.progress.queue = [];
     }
   }
@@ -310,11 +311,11 @@ export async function createBackupAsAttachment() {
 }
 
 export async function exportBackup() {
-  ztoolkit.log("** Tara Tara start export backup");
+  ztoolkit.log("** Tara start export backup");
   addon.data.progress.queue = getQueue().concat(["createZIP", "keepTaraXPI"]);
   addon.data.progress.totalTasks = addon.data.progress.queue.length;
   await createBackupFile(true);
-  ztoolkit.log("** Tara Tara finish export backup");
+  ztoolkit.log("** Tara finish export backup");
 }
 
 export async function importFromBackup() {
@@ -354,13 +355,23 @@ export async function restoreFromBackup() {
     ztoolkit.log(io["items"]);
     addon.data.progress.openSelectWindow(io);
     await io.deferred.promise;
-    ztoolkit.log("** Tara Tara select promise");
+    ztoolkit.log("** Tara select promise");
     ztoolkit.log(io["attachment"]);
-    // No item selected
+    // No item selected in selection window
     if (!io["attachment"]) return;
     attachment = Zotero.Items.get(files[io["attachment"]] as number);
+    await restoreFromFile(attachment!.getFilePath() as string);
+  } else {
+    await addon.data.progress.openProgressWindow({
+      header: getString("restore-header"),
+    });
+    await addon.data.progress.completeProgressWindow(
+      false,
+      getString("missing-backup-item-header"),
+      "",
+      getString("missing-backup-item-body"),
+    );
   }
-  await restoreFromFile(attachment!.getFilePath() as string);
 }
 
 export async function restoreFromFile(filename: string) {
@@ -507,12 +518,12 @@ export async function restoreFromFile(filename: string) {
           }
           break;
       }
-      addon.data.progress.updateProgressWindow(task, true);
+      addon.data.progress.updateProgressWindow(getString(task), true);
     } catch (e) {
       ztoolkit.log(e);
       success = false;
       addon.data.progress.queue = [];
-      addon.data.progress.updateProgressWindow(task, false);
+      addon.data.progress.updateProgressWindow(getString(task), false);
     }
   }
   let caution = "";
