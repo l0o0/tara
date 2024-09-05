@@ -175,14 +175,14 @@ export default class Progress {
     ele.setAttribute("id", row);
     let innerHTML: string;
     if (status) {
-      innerHTML = `<img src="${this.tickIcon}"> ${getString(row)}`;
+      innerHTML = `<img src="${this.tickIcon}"> ${row}`;
       const value = `${(1 - this.queue!.length / this.totalTasks!) * 100}`;
       ztoolkit.log(
         `Progress ${value}, ${this.queue!.length} / ${this.totalTasks!}`,
       );
       doc.querySelector("#progress")!.setAttribute("value", value);
     } else {
-      innerHTML = `<img src="${this.crossIcon}"> ${getString(row)}`;
+      innerHTML = `<img src="${this.crossIcon}"> ${row}`;
     }
     ele.innerHTML = innerHTML;
     doc.querySelector("#listbox")!.appendChild(ele);
@@ -190,8 +190,9 @@ export default class Progress {
 
   completeProgressWindow(
     status: boolean,
-    statusMsg: string,
+    headerMsg: string,
     footerMsg: string = "",
+    bodyMsg: string = "",
   ) {
     if (!this.progressWindow) return;
     const doc = this.progressWindow.document;
@@ -199,7 +200,13 @@ export default class Progress {
     doc.querySelector("#progress")!.setAttribute("value", "100");
     doc.querySelector("#button1")!.textContent = "OK";
     doc.querySelector("#msg")!.innerHTML = footerMsg;
-    doc.querySelector("#status")!.textContent = statusMsg;
+    doc.querySelector("#status")!.textContent = headerMsg;
+    if (bodyMsg != "") {
+      const p = doc.createElement("p");
+      p.textContent = bodyMsg;
+      const listbox = doc.getElementById("listbox") as HTMLElement;
+      listbox.parentNode!.insertBefore(p, listbox.nextSibling);
+    }
   }
 
   async openSelectWindow(io: any) {
