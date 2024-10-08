@@ -58,7 +58,7 @@
     "release-it": "^16.1.5",
     "replace-in-file": "^7.0.1",
     "typescript": "^5.2.2",
-    "zotero-plugin-scaffold": "^0.1.2",
+    "zotero-plugin-scaffold": "^0.1.6",
     "zotero-types": "^1.2.3"
   }
 }
