@@ -1,3 +1,5 @@
+/* eslint-disable no-undef */
+
 /**
  * Most of this code is from Zotero team's official Make It Red example[1]
  * or the Zotero 7 documentation[2].
@@ -40,6 +42,7 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
     `${rootURI}/chrome/content/scripts/__addonRef__.js`,
     ctx,
   );
+  Zotero.__addonInstance__.hooks.onStartup();
 }
 
 async function onMainWindowLoad({ window }, reason) {
