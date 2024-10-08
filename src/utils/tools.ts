@@ -1,3 +1,5 @@
+import { getPref, setPref } from "./prefs";
+
 export function pathjoin(dira: string, dirb: string | string[]): string {
   if (typeof dirb == "string") {
     return PathUtils.join(dira, dirb);
@@ -157,6 +159,7 @@ export async function unzipToTemporaryDir(filename: string, tmpDir: string) {
   const entryFiles: any = {};
   while (entries.hasMore()) {
     const entry = entries.getNext();
+    // Unix Mac Windows, path seperator.
     const pathParts = entry.split(/[/\\]/);
     if (pathParts.length > 1)
       subfolders.add(pathjoin(tmpDir, pathParts.slice(0, -1)));
@@ -177,4 +180,23 @@ export async function unzipToTemporaryDir(filename: string, tmpDir: string) {
   });
 
   zipReader.close();
+}
+
+
+// Find Tara backup item in library.
+export async function findBackupItem(): Promise<number | false> {
+  let itemID = getPref("itemID") as (number | undefined);
+  if (itemID) {
+    return itemID;
+  } else {
+    const s = new Zotero.Search();
+    s.addCondition("title", "is", "Tara_Backup");
+    const itemIDs = await s.search();
+    if (itemIDs.length > 0) {
+      setPref("itemID", itemIDs[0]); // Update default itemID value.
+      return itemIDs[0];
+    } else {
+      return false;
+    }
+  }
 }

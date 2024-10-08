@@ -3,6 +3,7 @@ import { getString } from "../utils/locale";
 import { getPref, setPref } from "../utils/prefs";
 import {
   copyDirectory,
+  findBackupItem,
   pathjoin,
   removeDirectory,
   unzipToTemporaryDir,
@@ -63,17 +64,10 @@ export function getQueue() {
 }
 
 export async function createBackupItem() {
-  const itemID = getPref("itemID");
+  const itemID = await findBackupItem();
   if (itemID && Zotero.Items.get(itemID as number)) {
     ztoolkit.log("备份条目已存在，不必创建新条目");
     return;
-  }
-  const s = new Zotero.Search();
-  s.addCondition("title", "is", "Tara_Backup");
-  const itemIDs = await s.search();
-  if (itemIDs.length > 0) {
-    // Use the first item returned.
-    setPref("itemID", itemIDs[0]);
   } else {
     // Create Docuement Item for store backup zip file.
     const item = new Zotero.Item("document");
@@ -332,7 +326,7 @@ export async function importFromBackup() {
 }
 
 export async function restoreFromBackup() {
-  const backupItemID = getPref("itemID") as number;
+  const backupItemID = await findBackupItem();
   const io: any = {
     title: getString("select-title"),
     deferred: Zotero.Promise.defer(),
