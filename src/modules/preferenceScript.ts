@@ -1,4 +1,4 @@
-import { FilePickerHelper } from "zotero-plugin-toolkit/dist/helpers/filePicker";
+import { FilePickerHelper } from "zotero-plugin-toolkit";
 import { config } from "../../package.json";
 import { setPref, getPref } from "../utils/prefs";
 
