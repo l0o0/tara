@@ -20,6 +20,6 @@ export class BasicExampleFactory {
       image: `chrome://${config.addonRef}/content/icons/tara.png`,
       defaultXUL: true,
     };
-    ztoolkit.PreferencePane.register(prefOptions);
+    Zotero.PreferencePanes.register(prefOptions);
   }
 }

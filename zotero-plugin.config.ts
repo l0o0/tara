@@ -33,10 +33,19 @@ export default defineConfig({
         outfile: `build/addon/chrome/content/scripts/${pkg.config.addonRef}.js`,
       },
     ],
-  },
-  release: {
-    github: {
-      enable: "local",
+    makeUpdateJson: {
+      updates: [
+        {
+          version: "1.0.0-9",
+          update_link:
+            "https://github.com/l0o0/tara/releases/download/1.0.0-9/tara.xpi",
+          applications: {
+            zotero: {
+              strict_min_version: "6.999",
+            },
+          },
+        },
+      ],
     },
   },
 

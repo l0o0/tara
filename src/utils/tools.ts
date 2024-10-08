@@ -39,6 +39,7 @@ export function removeDirectory(dir: string | nsIFile) {
   }
   const dirEntries = dir.directoryEntries;
   while (dirEntries.hasMoreElements()) {
+    // @ts-ignore
     const entry = dirEntries
       .getNext()
       .QueryInterface(Components.interfaces.nsIFile);
@@ -70,6 +71,7 @@ export function zipDirectory(
   for (let i = 0; i < dirArr.length; i++) {
     const dirEntries = dirArr[i].directoryEntries;
     while (dirEntries.hasMoreElements()) {
+      // @ts-ignore
       const entry = dirEntries
         .getNext()
         .QueryInterface(Components.interfaces.nsIFile); //entry is instance of nsiFile so here https://developer.mozilla.org/docs/XPCOM_Interface_Reference/nsIFile
@@ -77,11 +79,12 @@ export function zipDirectory(
       if (entry.path == zipPath) {
         ztoolkit.log(
           "skipping entry - will not add this entry to the zip file - as this is the zip itself: " +
-          zipPath,
+            zipPath,
         );
         continue;
       }
 
+      // @ts-ignore
       if (entry.isSymLink) {
         ztoolkit.log("Skipping symlink " + entry.leafName);
         continue;
@@ -109,6 +112,7 @@ export function zipDirectory(
   }
 
   const promise: any = new Promise((resolve, reject) => {
+    // @ts-ignore
     const zw = Components.classes["@mozilla.org/zipwriter;1"].createInstance(
       Components.interfaces.nsIZipWriter,
     );
@@ -149,6 +153,7 @@ export async function unzipToTemporaryDir(filename: string, tmpDir: string) {
   await IOUtils.makeDirectory(PathUtils.parent(tmpDir)!);
   await IOUtils.makeDirectory(tmpDir);
   const zipFile = Zotero.File.pathToFile(filename);
+  // @ts-ignore
   const zipReader = Components.classes[
     "@mozilla.org/libjar/zip-reader;1"
   ].createInstance(Components.interfaces.nsIZipReader);
@@ -182,10 +187,9 @@ export async function unzipToTemporaryDir(filename: string, tmpDir: string) {
   zipReader.close();
 }
 
-
 // Find Tara backup item in library.
 export async function findBackupItem(): Promise<number | false> {
-  let itemID = getPref("itemID") as (number | undefined);
+  const itemID = getPref("itemID") as number | undefined;
   if (itemID) {
     return itemID;
   } else {

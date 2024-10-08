@@ -1,4 +1,4 @@
-import { FilePickerHelper } from "zotero-plugin-toolkit/dist/helpers/filePicker";
+import { FilePickerHelper } from "zotero-plugin-toolkit";
 import { getString } from "../utils/locale";
 import { getPref, setPref } from "../utils/prefs";
 import {
@@ -12,6 +12,7 @@ import {
 
 import { version } from "../../package.json";
 
+// @ts-ignore
 const { AddonManager } = ChromeUtils.import(
   "resource://gre/modules/AddonManager.jsm",
 );

@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 pref("__prefsPrefix__.keepAddons", true);
 pref("__prefsPrefix__.keepPrefs", true);
 pref("__prefsPrefix__.keepStyles", true);
