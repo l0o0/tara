@@ -189,7 +189,7 @@ export async function unzipToTemporaryDir(filename: string, tmpDir: string) {
 
 // Find Tara backup item in library.
 export async function findBackupItem(): Promise<number | false> {
-  let itemID = getPref("itemID") as number | undefined;
+  const itemID = getPref("itemID") as number | undefined;
   if (itemID) {
     return itemID;
   } else {

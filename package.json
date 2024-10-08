@@ -14,7 +14,7 @@
     "start": "zotero-plugin serve",
     "build": "zotero-plugin build",
     "release": "zotero-plugin release",
-    "lint": "prettier --write . && eslint . --ext .ts --fix",
+    "lint": "prettier --write . && eslint . --fix",
     "test": "echo \"Error: no test specified\" && exit 1",
     "update-deps": "npm update --save"
   },
