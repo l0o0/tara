@@ -38,4 +38,4 @@ Preferences setting.
 
 # ❤Thanks
 
-This add-on is proud to use [Zotero addon template](https://github.com/windingwind/zotero-addon-template)
+This add-on is proud to use [Zotero plugin template](https://github.com/windingwind/zotero-plugin-template) and [Zotero plugin scaffold](https://github.com/northword/zotero-plugin-scaffold).

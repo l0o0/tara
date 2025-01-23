@@ -37,4 +37,4 @@
 
 # ❤鸣谢
 
-本插件使用了 [Zotero addon template](https://github.com/windingwind/zotero-addon-template) 模板
+本插件使用了 [Zotero plugin template](https://github.com/windingwind/zotero-plugin-template) 及 [Zotero plugin scaffold](https://github.com/northword/zotero-plugin-scaffold)。
