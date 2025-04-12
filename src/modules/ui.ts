@@ -123,8 +123,8 @@ export default class Progress {
   private crossIcon: string;
 
   constructor() {
-    this.tickIcon = "chrome://zotero/skin/tick.png";
-    this.crossIcon = "chrome://zotero/skin/cross.png";
+    this.tickIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#4ae03b" d="m9.55 15.15l8.475-8.475q.3-.3.7-.3t.7.3t.3.713t-.3.712l-9.175 9.2q-.3.3-.7.3t-.7-.3L4.55 13q-.3-.3-.288-.712t.313-.713t.713-.3t.712.3z"/></svg>`;
+    this.crossIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#e47828" d="M2.725 21q-.275 0-.5-.137t-.35-.363t-.137-.488t.137-.512l9.25-16q.15-.25.388-.375T12 3t.488.125t.387.375l9.25 16q.15.25.138.513t-.138.487t-.35.363t-.5.137zM12 18q.425 0 .713-.288T13 17t-.288-.712T12 16t-.712.288T11 17t.288.713T12 18m0-3q.425 0 .713-.288T13 14v-3q0-.425-.288-.712T12 10t-.712.288T11 11v3q0 .425.288.713T12 15"/></svg>`;
   }
 
   getProgress(progress: number, total: number): string {
@@ -175,14 +175,14 @@ export default class Progress {
     ele.setAttribute("id", row);
     let innerHTML: string;
     if (status) {
-      innerHTML = `<img src="${this.tickIcon}"> ${row}`;
+      innerHTML = `<div class="pitem" >${this.tickIcon} <p>${row}</p></div>`;
       const value = `${(1 - this.queue!.length / this.totalTasks!) * 100}`;
       ztoolkit.log(
         `Progress ${value}, ${this.queue!.length} / ${this.totalTasks!}`,
       );
       doc.querySelector("#progress")!.setAttribute("value", value);
     } else {
-      innerHTML = `<img src="${this.crossIcon}"> ${row}`;
+      innerHTML = `<div class="pitem" >${this.crossIcon} <p>${row}</p></div>`;
     }
     ele.innerHTML = innerHTML;
     doc.querySelector("#listbox")!.appendChild(ele);
