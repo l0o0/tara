@@ -29,16 +29,16 @@
   },
   "homepage": "https://github.com/l0o0/tara#readme",
   "dependencies": {
-    "zotero-plugin-toolkit": "^4.0.6"
+    "zotero-plugin-toolkit": "^4.1.2"
   },
   "devDependencies": {
-    "@eslint/js": "^9.12.0",
-    "@types/node": "^22.7.5",
-    "eslint": "^9.12.0",
-    "prettier": "^3.3.3",
-    "typescript": "^5.6.2",
-    "typescript-eslint": "^8.8.1",
-    "zotero-plugin-scaffold": "^0.1.6",
-    "zotero-types": "^2.2.0"
+    "@eslint/js": "^9.33.0",
+    "@types/node": "^22.17.1",
+    "eslint": "^9.33.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.39.0",
+    "zotero-plugin-scaffold": "^0.1.7",
+    "zotero-types": "^2.2.1"
   }
 }
