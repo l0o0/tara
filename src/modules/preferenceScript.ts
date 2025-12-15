@@ -1,5 +1,6 @@
 import { FilePickerHelper } from "zotero-plugin-toolkit";
 import { config } from "../../package.json";
+import { getString } from "../utils/locale";
 import { setPref, getPref } from "../utils/prefs";
 
 // Init complex preference value
@@ -41,7 +42,7 @@ function bindPrefEvents() {
     .prefs!.window.document.querySelector("#tara-choose-folder-button")
     ?.addEventListener("click", async (e) => {
       const f = await new FilePickerHelper(
-        `${Zotero.getString("tara-choose-exportDir")}`,
+        getString("tara-choose-exportDir"),
         "folder",
       ).open();
       ztoolkit.log(f);
