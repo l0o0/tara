@@ -42,7 +42,7 @@ function bindPrefEvents() {
     .prefs!.window.document.querySelector("#tara-choose-folder-button")
     ?.addEventListener("click", async (e) => {
       const f = await new FilePickerHelper(
-        getString("tara-choose-exportDir"),
+        getString("choose-exportDir"),
         "folder",
       ).open();
       ztoolkit.log(f);
