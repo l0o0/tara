@@ -8,43 +8,137 @@
       href="chrome://tara/skin/tara_icon.png"
     />
     <style>
+      :root {
+        /* Light mode colors */
+        --bg-color: #ffffff;
+        --text-color: #000000;
+        --border-color: #f4d754;
+        --border-radius: 4px;
+        --box-shadow-light: rgba(0, 0, 0, 0.1);
+
+        /* Progress bar colors */
+        --progress-bg: #e0e0e0;
+        --progress-fill: #4caf50;
+
+        /* Button colors */
+        --button-bg: #f0f0f0;
+        --button-hover-bg: #e0e0e0;
+        --button-text: #333333;
+        --button-border: #cccccc;
+
+        /* Error/blink animation colors */
+        --blink-start-border: rgb(226, 70, 56);
+        --blink-end-border: rgb(255, 102, 102);
+        --blink-start-shadow: rgba(223, 9, 166, 0.2);
+        --blink-end-shadow: rgba(235, 6, 59, 0.6);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          /* Dark mode colors */
+          --bg-color: #1e1e1e;
+          --text-color: #e0e0e0;
+          --border-color: #d4b744;
+          --box-shadow-light: rgba(255, 255, 255, 0.1);
+
+          /* Progress bar colors */
+          --progress-bg: #3a3a3a;
+          --progress-fill: #66bb6a;
+
+          /* Button colors */
+          --button-bg: #2d2d2d;
+          --button-hover-bg: #3a3a3a;
+          --button-text: #e0e0e0;
+          --button-border: #4a4a4a;
+
+          /* Error/blink animation colors - slightly adjusted for dark mode */
+          --blink-start-border: rgb(255, 90, 76);
+          --blink-end-border: rgb(255, 122, 122);
+          --blink-start-shadow: rgba(255, 50, 200, 0.3);
+          --blink-end-shadow: rgba(255, 50, 80, 0.7);
+        }
+      }
+
+      html {
+        background-color: var(--bg-color);
+        min-height: 100vh;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      }
+
       #box {
         margin: auto;
         margin-top: 15px;
-        width: 60%;
         padding: 10px;
         width: 320px;
         height: 200px;
       }
 
       .normal_box {
-        border: 2px solid #f4d754;
-        border-radius: 4px;
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background-color: var(--bg-color);
       }
 
       #progress {
         width: 220px;
+        height: 20px;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      #progress::-webkit-progress-bar {
+        background-color: var(--progress-bg);
+        border-radius: 3px;
+      }
+
+      #progress::-webkit-progress-value {
+        background-color: var(--progress-fill);
+        border-radius: 3px;
+      }
+
+      #progress::-moz-progress-bar {
+        background-color: var(--progress-fill);
+        border-radius: 3px;
       }
 
       #status {
         height: 20px;
+        color: var(--text-color);
       }
 
       ul {
         list-style-type: none;
         padding-left: 5px;
         padding-bottom: 2px;
-        font-size: 0.95rem;
-      }
-
-      svg.icon {
-        width: 0.95rem;
-        height: 0.95rem;
+        color: var(--text-color);
       }
 
       #button1 {
         width: 60px;
         float: right;
+        background-color: var(--button-bg);
+        color: var(--button-text);
+        border: 1px solid var(--button-border);
+        border-radius: 3px;
+        padding: 4px 8px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      #button1:hover {
+        background-color: var(--button-hover-bg);
+      }
+
+      #button1:active {
+        transform: translateY(1px);
       }
 
       #msg {
@@ -52,6 +146,13 @@
         padding-right: 15px;
         padding-top: 4px;
         font-size: 0.9em;
+        color: var(--text-color);
+      }
+
+      div.pitem {
+        display: flex;
+        align-items: center;
+        height: 20px;
       }
 
       .blink_box {
@@ -60,17 +161,17 @@
 
       @keyframes blink {
         0% {
-          border-color: rgb(226, 70, 56);
+          border-color: var(--blink-start-border);
           box-shadow:
-            0 0 5px rgba(223, 9, 166, 0.2),
-            inset 0 0 5px rgba(227, 27, 54, 0.1);
+            0 0 5px var(--blink-start-shadow),
+            inset 0 0 5px var(--blink-start-shadow);
         }
 
         100% {
-          border-color: rgb(255, 102, 102);
+          border-color: var(--blink-end-border);
           box-shadow:
-            0 0 15px rgba(235, 6, 59, 0.6),
-            inset 0 0 8px rgba(235, 6, 59, 0.4);
+            0 0 15px var(--blink-end-shadow),
+            inset 0 0 8px var(--blink-end-shadow);
         }
       }
     </style>

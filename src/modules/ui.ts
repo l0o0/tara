@@ -216,7 +216,7 @@ export default class Progress {
     ztoolkit.log("** Tara open select window ");
     this.selectionWindow = await this.openWindow(
       "chrome://tara/content/select.html",
-      "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=300,width=410",
+      "chrome,close=yes,resizable=yes,dependent,dialog,centerscreen,height=330,width=410",
       io,
     );
   }

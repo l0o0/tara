@@ -8,32 +8,167 @@
       href="chrome://tara/skin/tara_icon.png"
     />
     <style>
+      :root {
+        /* Light mode colors */
+        --bg-color: #ffffff;
+        --text-color: #000000;
+        --border-color: #f4d754;
+        --border-radius: 4px;
+        --box-bg: #fafafa;
+        --box-shadow-light: rgba(0, 0, 0, 0.1);
+
+        /* Button colors */
+        --button-bg: #f0f0f0;
+        --button-hover-bg: #e0e0e0;
+        --button-text: #333333;
+        --button-border: #cccccc;
+        --button-primary-bg: #4caf50;
+        --button-primary-hover-bg: #45a049;
+        --button-primary-text: #ffffff;
+
+        /* Radio button colors */
+        --radio-border: #999999;
+        --radio-checked: #4caf50;
+        --radio-hover: #e8e8e8;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          /* Dark mode colors */
+          --bg-color: #1e1e1e;
+          --text-color: #e0e0e0;
+          --border-color: #d4b744;
+          --box-bg: #2a2a2a;
+          --box-shadow-light: rgba(255, 255, 255, 0.1);
+
+          /* Button colors */
+          --button-bg: #2d2d2d;
+          --button-hover-bg: #3a3a3a;
+          --button-text: #e0e0e0;
+          --button-border: #4a4a4a;
+          --button-primary-bg: #66bb6a;
+          --button-primary-hover-bg: #5cb860;
+          --button-primary-text: #000000;
+
+          /* Radio button colors */
+          --radio-border: #666666;
+          --radio-checked: #66bb6a;
+          --radio-hover: #333333;
+        }
+      }
+
+      html {
+        background-color: var(--bg-color);
+        min-height: 100vh;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        margin: 0;
+        padding: 10px;
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      }
+
       p {
         margin-bottom: 4px;
+        color: var(--text-color);
+        font-weight: 500;
       }
 
       #box {
         margin: auto;
-        width: 60%;
-        border: 2px solid #f4d754;
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
         padding: 10px;
         width: 360px;
-        height: 185px;
         height: 200px;
         overflow-y: auto;
+        background-color: var(--box-bg);
+      }
+
+      /* Custom scrollbar for webkit browsers */
+      #box::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      #box::-webkit-scrollbar-track {
+        background: var(--bg-color);
+        border-radius: 4px;
+      }
+
+      #box::-webkit-scrollbar-thumb {
+        background: var(--radio-border);
+        border-radius: 4px;
+      }
+
+      #box::-webkit-scrollbar-thumb:hover {
+        background: var(--text-color);
+      }
+
+      form > div {
+        padding: 4px;
+        margin: 2px 0;
+        border-radius: 3px;
+        transition: background-color 0.2s ease;
+      }
+
+      form > div:hover {
+        background-color: var(--radio-hover);
       }
 
       #buttonBlock {
-        margin-top: 5px;
+        margin-top: 10px;
         float: right;
+        display: flex;
+        gap: 8px;
+      }
+
+      button {
+        background-color: var(--button-bg);
+        color: var(--button-text);
+        border: 1px solid var(--button-border);
+        border-radius: 3px;
+        padding: 6px 16px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        font-size: 14px;
+      }
+
+      button:hover {
+        background-color: var(--button-hover-bg);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      #button2 {
+        background-color: var(--button-primary-bg);
+        color: var(--button-primary-text);
+        border-color: var(--button-primary-bg);
+      }
+
+      #button2:hover {
+        background-color: var(--button-primary-hover-bg);
+        border-color: var(--button-primary-hover-bg);
+      }
+
+      input[type="radio"] {
+        cursor: pointer;
+        accent-color: var(--radio-checked);
       }
 
       label {
         margin-left: 5px;
+        cursor: pointer;
+        color: var(--text-color);
       }
 
       input:checked + label {
         font-weight: bold;
+        color: var(--radio-checked);
       }
     </style>
     <script>
