@@ -316,7 +316,7 @@ export async function exportBackup() {
 export async function importFromBackup() {
   // Import from an export backup zip
   const filename = await new FilePickerHelper(
-    `${Zotero.getString("select-backup-file")}`,
+    `${getString("select-backup-file")}`,
     "open",
     [[`${getString("zip-file")}(*.zip)"`, "*.zip"]],
   ).open();
