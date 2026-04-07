@@ -32,12 +32,12 @@
     "zotero-plugin-toolkit": "^4.1.2"
   },
   "devDependencies": {
-    "@eslint/js": "^9.33.0",
-    "@types/node": "^22.17.1",
-    "eslint": "^9.33.0",
-    "prettier": "^3.6.2",
-    "typescript": "^5.9.2",
-    "typescript-eslint": "^8.39.0",
+    "@eslint/js": "^9.39.4",
+    "@types/node": "^22.19.17",
+    "eslint": "^9.39.4",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.58.0",
     "zotero-plugin-scaffold": "^0.1.7",
     "zotero-types": "^3.1.9"
   }

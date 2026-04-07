@@ -153,7 +153,7 @@ export async function unzipToTemporaryDir(filename: string, tmpDir: string) {
   await IOUtils.makeDirectory(PathUtils.parent(tmpDir)!);
   await IOUtils.makeDirectory(tmpDir);
   const zipFile = Zotero.File.pathToFile(filename);
-  // @ts-ignore
+  // @ts-ignore - nsIZipReader is not in the type definition file, but it exists in Zotero's XPCOM components.
   const zipReader = Components.classes[
     "@mozilla.org/libjar/zip-reader;1"
   ].createInstance(Components.interfaces.nsIZipReader);
